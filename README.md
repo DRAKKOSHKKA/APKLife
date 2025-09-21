@@ -20,7 +20,7 @@
 ### 1. Клонирование репозитория
 ```bash
 git clone https://github.com/DRAKKOSHKKA/APKLife.git
-cd AppSchool
+cd APKLife
 ```
 
 ### 2. Запуск программы
