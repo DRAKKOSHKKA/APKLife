@@ -2,13 +2,11 @@ from flask import Flask, render_template, request, redirect, make_response, json
 import os
 import json
 import datetime
-
 from utils_schedule import get_group_info, get_schedule
 from routes_group import bp_group
 
 app = Flask(__name__)
 app.register_blueprint(bp_group)
-
 
 import datetime
 from flask import Flask, request, render_template
@@ -56,7 +54,7 @@ def index():
             context["error"] = f"'{search_string}' не найдено. Проверьте название."
             return render_template("index.html", **context)
 
-        schedule, days_list, prev_week_id, next_week_id = get_schedule(week_id or 14436, entity_info)
+        schedule, days_list, prev_week_id, next_week_id = get_schedule(week_id or 14449, entity_info)
 
         # Рекурсивная очистка всех строк в расписании и днях
         schedule = strip_trailing_commas(schedule)
