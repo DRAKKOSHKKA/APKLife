@@ -2,6 +2,19 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+from datetime import datetime
+
+def get_current_week():
+    """
+    Возвращает номер текущей недели по системе сайта.
+    29 января 2026 = 14585.
+    """
+    today = datetime.now()
+    epoch = datetime(1970, 1, 1)
+    days_since_epoch = (today - epoch).days
+    week_number = (days_since_epoch // 7) + 11659
+    return week_number
+
 
 def get_group_info(search_string):
     url = "https://it-institut.ru/SearchString/KeySearch"

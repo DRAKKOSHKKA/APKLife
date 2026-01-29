@@ -1,0 +1,7 @@
+{% if error %}
+<div class="alert alert-danger" role="alert">{{ error }}</div>
+{% elif corrected_name %}
+<div class="alert alert-info" role="alert">
+	Найдена похожая запись: <strong>{{ corrected_name }}</strong>
+</div>
+{% endif %}
