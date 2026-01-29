@@ -37,10 +37,19 @@
 	{ "name": "Ахметшина Д.Г.", "type": "Teacher" },
 	{ "name": "Автомастерская", "type": "Classroom" },
 	{ "name": "актовый зал", "type": "Classroom" },
-	{ "name": "Альметьевский трубный завод", "type": "Classroom" },
+	{
+		"name": "Альметьевский трубный завод",
+		"type": "Classroom"
+	},
 	{ "name": "Ушаков С.Л.", "type": "Teacher" },
-	{ "name": "учебный корпус КАИ, каб. 201", "type": "Classroom" },
-	{ "name": "учебный корпус КАИ, каб. 204", "type": "Classroom" },
+	{
+		"name": "учебный корпус КАИ, каб. 201",
+		"type": "Classroom"
+	},
+	{
+		"name": "учебный корпус КАИ, каб. 204",
+		"type": "Classroom"
+	},
 	{ "name": "Климова Т.С.", "type": "Teacher" },
 	{ "name": "Короткова З.Я.", "type": "Teacher" },
 	{ "name": "Костина А.С.", "type": "Teacher" },
@@ -79,11 +88,17 @@
 	{ "name": "Прохорова И.Г.", "type": "Teacher" },
 	{ "name": "пр. Строителей", "type": "Classroom" },
 	{ "name": "Преддипломная практика", "type": "Classroom" },
-	{ "name": "Предприятия общественного питания", "type": "Classroom" },
+	{
+		"name": "Предприятия общественного питания",
+		"type": "Classroom"
+	},
 	{ "name": "производственная практика", "type": "Classroom" },
 	{ "name": "Рамазанова И.А.", "type": "Teacher" },
 	{ "name": "Рафигуллина М.М.", "type": "Teacher" },
-	{ "name": "ОАО Альметьевский Завод Радиоприбор", "type": "Classroom" },
+	{
+		"name": "ОАО Альметьевский Завод Радиоприбор",
+		"type": "Classroom"
+	},
 	{ "name": "ООО \"АЛНАС\"", "type": "Classroom" },
 	{ "name": "ООО \"АЛНАС\" каб. №5", "type": "Classroom" },
 	{ "name": "Латыпова Л.Р.", "type": "Teacher" },
@@ -110,5 +125,32 @@
 	{ "name": "Бигашев М.Х.", "type": "Teacher" },
 	{ "name": "Бигашева Г.Р.", "type": "Teacher" },
 	{ "name": "Бикмурзина И.Н.", "type": "Teacher" },
-	{ "name": "Библиотека", "type": "Classroom" }
+	{ "name": "Библиотека", "type": "Classroom" },
+	{ "name": "101", "type": "Classroom" },
+	{ "name": "102", "type": "Classroom" },
+	{ "name": "106", "type": "Classroom" },
+	{ "name": "109", "type": "Classroom" },
+	{ "name": "110", "type": "Classroom" },
+	{ "name": "202", "type": "Classroom" },
+	{ "name": "212", "type": "Classroom" },
+	{ "name": "301", "type": "Classroom" },
+	{ "name": "302", "type": "Classroom" },
+	{ "name": "304", "type": "Classroom" },
+	{ "name": "305", "type": "Classroom" },
+	{ "name": "308", "type": "Classroom" },
+	{ "name": "309", "type": "Classroom" },
+	{ "name": "401", "type": "Classroom" },
+	{ "name": "402", "type": "Classroom" },
+	{ "name": "403", "type": "Classroom" },
+	{ "name": "404", "type": "Classroom" },
+	{ "name": "405", "type": "Classroom" },
+	{ "name": "406", "type": "Classroom" },
+	{ "name": "409", "type": "Classroom" },
+	{ "name": "410", "type": "Classroom" },
+	{ "name": "101, Фахретдина 50", "type": "Classroom" },
+	{ "name": "102, Фахретдина 50", "type": "Classroom" },
+	{ "name": "103, Фахретдина 50", "type": "Classroom" },
+	{ "name": "201, Фахретдина 50", "type": "Classroom" },
+	{ "name": "210, Фахретдина 50", "type": "Classroom" },
+	{ "name": "211, Фахретдина 50", "type": "Classroom" }
 ]
