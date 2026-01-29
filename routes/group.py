@@ -6,4 +6,5 @@ bp_group = Blueprint("group", __name__)
 @bp_group.route("/")
 def group_page():
     context = load_schedule_context(request.args)
+    print(f'\n\n{context}\n\n')
     return render_template("group.html", **context)

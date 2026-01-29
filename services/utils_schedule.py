@@ -4,6 +4,23 @@ import re
 import json
 from datetime import datetime
 
+def get_current_day_name():
+    """
+    Возвращает название текущего дня недели на русском.
+    """
+    days_ru = {
+        'Monday': 'Понедельник',
+        'Tuesday': 'Вторник',
+        'Wednesday': 'Среда',
+        'Thursday': 'Четверг',
+        'Friday': 'Пятница',
+        'Saturday': 'Суббота',
+        'Sunday': 'Воскресенье'
+    }
+    today = datetime.now()
+    eng_day = today.strftime('%A')
+    return days_ru[eng_day]
+
 def get_current_week():
     """
     Возвращает номер текущей недели по системе сайта.
@@ -46,9 +63,6 @@ def get_group_info(search_string):
     except (requests.exceptions.RequestException, json.JSONDecodeError) as e:
         print(f"Ошибка при поиске: {e}")
         return None, None
-
-# utils_schedule.py
-# ... остальной код ...
 
 def get_schedule(week_id, entity_info):
     if not entity_info:
@@ -133,12 +147,13 @@ def get_schedule(week_id, entity_info):
                     room = None
 
                     if teacher_room_full:
-                        match = re.search(r'\b\d{3}\b', teacher_room_full)
-                        if match:
-                            room = match.group(0)
-                            teacher = teacher_room_full.replace(room, '').strip()
-                        else:
-                            teacher = teacher_room_full
+                        parts = [p.strip() for p in teacher_room_full.split(',') if p.strip()]
+                        if len(parts) == 1:
+                            teacher = parts[0]
+                        elif len(parts) >= 2:
+                            teacher = parts[0]
+                            # объединяем все остальные части в room (чтобы захватывать "101А, Лаборатория физики")
+                            room = ', '.join(parts[1:])
 
                     lesson_time = time_intervals[i] if i < len(time_intervals) else current_time_range
                     lesson = {
@@ -211,4 +226,4 @@ def get_schedule(week_id, entity_info):
 
     return schedule, days_list, prev_week_id, next_week_id
 
-#print(json.dumps(get_schedule(14449, get_group_info("11 нмо")[0]), indent=4, sort_keys=True, ensure_ascii=False))
+#print(json.dumps(get_schedule(14585, get_group_info("11 нмо")[0]), indent=4, sort_keys=True, ensure_ascii=False))

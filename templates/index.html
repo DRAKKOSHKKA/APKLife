@@ -4,7 +4,7 @@
 <div class="card shadow-sm">
 	<div class="card-body">
 		<h5 class="card-title">Введите название</h5>
-		<form id="searchForm" method="get">
+		<form id="searchForm" method="get" action="/group/">
 			<div class="mb-3 position-relative">
 				<input
 					type="text"
@@ -16,9 +16,19 @@
 				/>
 				<div
 					id="suggestions-container"
-					class="list-group position-absolute w-100 z-100"
-					style="display: none"
+					class="list-group position-absolute w-100"
+					style="display: none; z-index: 1000"
 				></div>
+				<input
+					type="hidden"
+					name="week_id"
+					value="{{ current_week }}"
+				/>
+				<input
+					type="hidden"
+					name="day"
+					value="{{ current_day_name }}"
+				/>
 			</div>
 			<button type="submit" class="btn btn-primary w-100">
 				Найти расписание

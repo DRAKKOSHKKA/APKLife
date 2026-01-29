@@ -45,25 +45,10 @@
 						>Сбросить</span
 					>
 				</a>
-				{% endif %}
+				{% endif %} {% if request.path != '/info/' %}
 				<a
 					class="nav-link text-center px-1 py-0"
-					href="#"
-					data-bs-toggle="modal"
-					data-bs-target="#settingsModal"
-				>
-					<i class="bi bi-gear-fill d-block fs-5"></i>
-					<span
-						class="d-block"
-						style="font-size: 0.75em"
-						>Настройки</span
-					>
-				</a>
-				<a
-					class="nav-link text-center px-1 py-0"
-					href="#"
-					data-bs-toggle="modal"
-					data-bs-target="#infoModal"
+					href="/info/"
 				>
 					<i
 						class="bi bi-info-circle d-block fs-5"
@@ -74,6 +59,19 @@
 						>Инфо</span
 					>
 				</a>
+				{% else %}
+				<a
+					class="nav-link text-center px-1 py-0"
+					href="/"
+				>
+					<i class="bi bi-x-circle d-block fs-5"></i>
+					<span
+						class="d-block"
+						style="font-size: 0.75em"
+						>Назад</span
+					>
+				</a>
+				{% endif %}
 			</div>
 		</footer>
 

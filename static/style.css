@@ -3,7 +3,9 @@
 	border-radius: 12px;
 	margin-bottom: 14px;
 	box-shadow: 0 6px 24px rgba(13, 110, 253, 0.1);
-	transition: box-shadow 0.2s, background 0.2s;
+	transition:
+		box-shadow 0.2s,
+		background 0.2s;
 	border: none;
 	padding: 0.7em 1em;
 }
@@ -59,6 +61,10 @@ header .day-nav .btn.btn-light {
 	flex-shrink: 0;
 }
 
+.weekend {
+	color: #fff;
+}
+
 /* Урок */
 .lesson {
 	padding: 12px;
@@ -89,6 +95,36 @@ header .day-nav .btn.btn-light {
 .suggestions-container-scrollable {
 	max-height: 200px;
 	overflow-y: auto;
+}
+
+/* Подсказки */
+#suggestions-container {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	width: 100%;
+	z-index: 1000;
+	display: none;
+	max-height: 220px; /* ограничиваем высоту */
+	overflow-y: auto; /* прокрутка при переполнении */
+}
+
+#suggestions-container a.list-group-item {
+	cursor: pointer;
+	padding: 8px 12px;
+}
+
+#suggestions-container a.list-group-item:hover {
+	background-color: rgba(13, 110, 253, 0.1);
+}
+
+/* Прокрутка для тёмной темы */
+body.dark-mode #suggestions-container a.list-group-item {
+	background-color: #1e1e1e;
+	color: #e0e0e0;
+}
+body.dark-mode #suggestions-container a.list-group-item:hover {
+	background-color: #2a2a2a;
 }
 
 .badge-type {
@@ -382,12 +418,22 @@ body.dark-mode .list-group-item.text-center {
 
 /* Сообщение "Пары закончились" */
 .list-group-item.text-center.text-muted {
-	background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+	color: #121212;
+	background: linear-gradient(
+		135deg,
+		#f8f9fa 0%,
+		#e9ecef 100%
+	);
 	border: none;
 	margin-top: 10px;
 }
 body.dark-mode .list-group-item.text-center.text-muted {
-	background: linear-gradient(135deg, #2a2a2a 0%, #3a3a3a 100%);
+	color: #f8f9fa;
+	background: linear-gradient(
+		135deg,
+		#2a2a2a 0%,
+		#3a3a3a 100%
+	);
 }
 
 /* Переключатели */
@@ -419,7 +465,11 @@ body.dark-mode .shadow-sm {
 .empty-lesson {
 	padding: 20px;
 	text-align: center;
-	background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+	background: linear-gradient(
+		135deg,
+		#f8f9fa 0%,
+		#e9ecef 100%
+	);
 	border-radius: 12px;
 	margin: 8px 0;
 	border: 2px dashed #dee2e6;
@@ -427,7 +477,11 @@ body.dark-mode .shadow-sm {
 }
 
 .empty-lesson:hover {
-	background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+	background: linear-gradient(
+		135deg,
+		#e9ecef 0%,
+		#dee2e6 100%
+	);
 	border-color: #adb5bd;
 	transform: translateY(-2px);
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -488,12 +542,20 @@ body.dark-mode .shadow-sm {
 
 /* Темная тема для пустого урока */
 body.dark-mode .empty-lesson {
-	background: linear-gradient(135deg, #2a2a2a 0%, #3a3a3a 100%);
+	background: linear-gradient(
+		135deg,
+		#2a2a2a 0%,
+		#3a3a3a 100%
+	);
 	border: 2px dashed #444;
 }
 
 body.dark-mode .empty-lesson:hover {
-	background: linear-gradient(135deg, #3a3a3a 0%, #4a4a4a 100%);
+	background: linear-gradient(
+		135deg,
+		#3a3a3a 0%,
+		#4a4a4a 100%
+	);
 	border-color: #666;
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
@@ -532,12 +594,20 @@ body.dark-mode .empty-lesson .time i {
 
 /* Специальные стили для выходного дня */
 .weekend-empty {
-	background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+	background: linear-gradient(
+		135deg,
+		#e3f2fd 0%,
+		#bbdefb 100%
+	);
 	border: 2px dashed #90caf9;
 }
 
 body.dark-mode .weekend-empty {
-	background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+	background: linear-gradient(
+		135deg,
+		#1a237e 0%,
+		#283593 100%
+	);
 	border: 2px dashed #5c6bc0;
 }
 
@@ -555,7 +625,11 @@ body.dark-mode .weekend-empty .empty-lesson-content {
 	padding: 20px;
 	border-radius: 12px;
 	margin: 2px 0;
-	background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+	background: linear-gradient(
+		135deg,
+		#ffffff 0%,
+		#f8f9fa 100%
+	);
 	border: 2px solid #e9ecef;
 	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
 	transition: all 0.3s ease;
@@ -570,7 +644,7 @@ body.dark-mode .weekend-empty .empty-lesson-content {
 }
 
 .lesson::before {
-	content: '';
+	content: "";
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -653,7 +727,11 @@ body.dark-mode .weekend-empty .empty-lesson-content {
 
 /* Стили для пустого урока */
 .empty-lesson {
-	background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+	background: linear-gradient(
+		135deg,
+		#f8f9fa 0%,
+		#e9ecef 100%
+	);
 	border: 2px dashed #dee2e6;
 }
 
@@ -662,7 +740,11 @@ body.dark-mode .weekend-empty .empty-lesson-content {
 }
 
 .empty-lesson:hover {
-	background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+	background: linear-gradient(
+		135deg,
+		#e9ecef 0%,
+		#dee2e6 100%
+	);
 	border-color: #adb5bd;
 }
 
@@ -693,7 +775,11 @@ body.dark-mode .weekend-empty .empty-lesson-content {
 
 /* Стили для сдвоенных пар */
 .multiple-lesson {
-	background: linear-gradient(135deg, #e8f4fd 0%, #d1e9fa 100%);
+	background: linear-gradient(
+		135deg,
+		#e8f4fd 0%,
+		#d1e9fa 100%
+	);
 	border: 2px solid #b8d4f0;
 }
 
@@ -711,7 +797,11 @@ body.dark-mode .weekend-empty .empty-lesson-content {
 
 /* Стили для выходных дней */
 .weekend-empty {
-	background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+	background: linear-gradient(
+		135deg,
+		#e3f2fd 0%,
+		#bbdefb 100%
+	);
 	border: 2px dashed #90caf9;
 }
 
@@ -744,13 +834,22 @@ body.dark-mode .weekend-empty .empty-lesson-content {
 	margin: 15px 0;
 	border: none;
 	height: 1px;
-	background: linear-gradient(to right, transparent, #dee2e6, transparent);
+	background: linear-gradient(
+		to right,
+		transparent,
+		#dee2e6,
+		transparent
+	);
 	opacity: 0.6;
 }
 
 /* Темная тема */
 body.dark-mode .lesson {
-	background: linear-gradient(135deg, #2a2a2a 0%, #1e1e1e 100%);
+	background: linear-gradient(
+		135deg,
+		#2a2a2a 0%,
+		#1e1e1e 100%
+	);
 	border: 2px solid #333;
 	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
@@ -798,12 +897,20 @@ body.dark-mode .group i {
 }
 
 body.dark-mode .empty-lesson {
-	background: linear-gradient(135deg, #2a2a2a 0%, #3a3a3a 100%);
+	background: linear-gradient(
+		135deg,
+		#2a2a2a 0%,
+		#3a3a3a 100%
+	);
 	border: 2px dashed #444;
 }
 
 body.dark-mode .empty-lesson:hover {
-	background: linear-gradient(135deg, #3a3a3a 0%, #4a4a4a 100%);
+	background: linear-gradient(
+		135deg,
+		#3a3a3a 0%,
+		#4a4a4a 100%
+	);
 	border-color: #666;
 }
 
@@ -812,12 +919,20 @@ body.dark-mode .empty-lesson-content {
 }
 
 body.dark-mode .multiple-lesson {
-	background: linear-gradient(135deg, #2d4b5b 0%, #1e3a48 100%);
+	background: linear-gradient(
+		135deg,
+		#2d4b5b 0%,
+		#1e3a48 100%
+	);
 	border: 2px solid #2c5364;
 }
 
 body.dark-mode .weekend-empty {
-	background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+	background: linear-gradient(
+		135deg,
+		#1a237e 0%,
+		#283593 100%
+	);
 	border: 2px dashed #5c6bc0;
 }
 
@@ -826,7 +941,12 @@ body.dark-mode .weekend-empty .empty-lesson-content {
 }
 
 body.dark-mode .lesson-divider {
-	background: linear-gradient(to right, transparent, #444, transparent);
+	background: linear-gradient(
+		to right,
+		transparent,
+		#444,
+		transparent
+	);
 }
 
 /* Адаптивность для мобильных */
@@ -880,4 +1000,17 @@ body.dark-mode .lesson-divider {
 body.dark-mode .current-lesson {
 	border: 2px solid #4caf50;
 	box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.3);
+}
+
+/* Тёмная тема для сообщения "Пары закончились" */
+body.dark-mode .text-muted {
+	color: #f8f9fa !important; /* светлый текст */
+}
+
+body.dark-mode .info-card {
+	background-color: #2a2a2a !important;
+	color: #e0e0e0;
+	border-radius: 8px;
+	padding: 15px;
+	border: 1px solid #333;
 }

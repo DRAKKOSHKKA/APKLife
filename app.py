@@ -1,6 +1,7 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from routes.group import bp_group
 from routes.main import bp_main
+from routes.info import bp_info
 from werkzeug.exceptions import HTTPException
 import traceback
 
@@ -11,6 +12,7 @@ def create_app():
     # Роуты
     app.register_blueprint(bp_main)
     app.register_blueprint(bp_group, url_prefix="/group")
+    app.register_blueprint(bp_info, url_prefix="/info")
 
     # Глобальный перехват ошибок
     @app.errorhandler(Exception)

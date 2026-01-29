@@ -6,18 +6,13 @@ document.addEventListener("DOMContentLoaded", function () {
 	const searchForm = document.getElementById("searchForm");
 	const darkModeSwitch =
 		document.getElementById("darkModeSwitch");
-	const autoLoadSwitch =
-		document.getElementById("autoLoadSwitch");
 	const body = document.body;
 
 	let suggestions = [];
 
+	// Проверка тёмной темы из localStorage
 	const isDarkMode =
 		localStorage.getItem("darkMode") === "true";
-	const autoLoad =
-		localStorage.getItem("autoLoad") !== "false";
-
-	// Инициализация темы
 	if (isDarkMode) {
 		body.classList.add("dark-mode");
 		if (darkModeSwitch) darkModeSwitch.checked = true;
@@ -26,153 +21,7 @@ document.addEventListener("DOMContentLoaded", function () {
 		if (darkModeSwitch) darkModeSwitch.checked = false;
 	}
 
-	// Инициализация автозагрузки
-	if (autoLoadSwitch) {
-		autoLoadSwitch.checked = autoLoad;
-
-		autoLoadSwitch.addEventListener("change", function () {
-			localStorage.setItem("autoLoad", this.checked);
-		});
-	}
-
-	// Сохранение выбранной группы
-	if (groupInput) {
-		groupInput.addEventListener("blur", function () {
-			if (this.value.trim()) {
-				localStorage.setItem(
-					"lastGroup",
-					this.value.trim()
-				);
-			}
-		});
-	}
-
-	// Предотвращаем перезагрузку при выборе подсказки
-	if (searchForm && groupInput) {
-		searchForm.addEventListener("submit", function (e) {
-			if (groupInput.dataset.selectedSuggestion) {
-				e.preventDefault();
-				this.submit();
-			}
-		});
-	}
-
-	// Загрузка подсказок
-	fetch("/suggestions.json")
-		.then((response) => response.json())
-		.then((data) => {
-			suggestions = data;
-		})
-		.catch((error) =>
-			console.error("Ошибка загрузки подсказок:", error)
-		);
-
-	// Логика автодополнения
-	if (groupInput && suggestionsContainer) {
-		const lastInput = localStorage.getItem("lastInput");
-		if (lastInput) {
-			groupInput.value = lastInput;
-		}
-
-		groupInput.addEventListener("input", function () {
-			const inputValue = this.value.toLowerCase();
-			localStorage.setItem("lastInput", this.value);
-
-			if (!inputValue.length) {
-				suggestionsContainer.style.display = "none";
-				return;
-			}
-
-			suggestionsContainer.style.display = "block";
-			suggestionsContainer.innerHTML = "";
-
-			const filteredSuggestions = suggestions.filter((s) =>
-				s.name.toLowerCase().includes(inputValue)
-			);
-
-			if (filteredSuggestions.length > 10) {
-				suggestionsContainer.classList.add(
-					"suggestions-container-scrollable"
-				);
-			} else {
-				suggestionsContainer.classList.remove(
-					"suggestions-container-scrollable"
-				);
-			}
-
-			filteredSuggestions
-				.slice(0, 15)
-				.forEach((suggestion) => {
-					const item = document.createElement("a");
-					item.classList.add(
-						"list-group-item",
-						"list-group-item-action"
-					);
-					item.href = "#";
-
-					let badgeColor = "primary";
-					if (suggestion.type === "Teacher")
-						badgeColor = "success";
-					else if (suggestion.type === "Classroom")
-						badgeColor = "info";
-
-					item.innerHTML = `
-					${suggestion.name}
-					<span class="badge rounded-pill bg-${badgeColor} badge-type">
-						${suggestion.type}
-					</span>
-				`;
-
-					item.addEventListener("click", (e) => {
-						e.preventDefault();
-						groupInput.value = suggestion.name;
-
-						localStorage.setItem(
-							"lastInput",
-							suggestion.name
-						);
-						localStorage.setItem(
-							"lastGroup",
-							suggestion.name
-						);
-
-						groupInput.dataset.selectedSuggestion =
-							"true";
-						suggestionsContainer.style.display =
-							"none";
-						searchForm.submit();
-					});
-
-					suggestionsContainer.appendChild(item);
-				});
-		});
-
-		groupInput.addEventListener("blur", () => {
-			setTimeout(() => {
-				suggestionsContainer.style.display = "none";
-			}, 200);
-		});
-
-		groupInput.addEventListener("focus", () => {
-			if (groupInput.value.length > 0) {
-				suggestionsContainer.style.display = "block";
-			}
-		});
-	}
-
-	// Закрытие подсказок при клике вне области
-	document.addEventListener("click", (e) => {
-		if (
-			suggestionsContainer &&
-			groupInput &&
-			!suggestionsContainer.contains(e.target) &&
-			e.target !== groupInput
-		) {
-			suggestionsContainer.style.display = "none";
-		}
-	});
-
-	// Переключение темы
+	// Переключение тёмной темы
 	if (darkModeSwitch) {
 		darkModeSwitch.addEventListener("change", function () {
 			if (this.checked) {
@@ -184,4 +33,109 @@ document.addEventListener("DOMContentLoaded", function () {
 			}
 		});
 	}
+
+	// Загрузка JSON с подсказками
+	fetch("/static/suggestions.json")
+		.then((response) => response.json())
+		.then((data) => {
+			suggestions = data;
+		})
+		.catch((error) =>
+			console.error("Ошибка загрузки подсказок:", error)
+		);
+
+	if (!groupInput || !suggestionsContainer) return;
+
+	// Восстановление последнего ввода
+	const lastInput = localStorage.getItem("lastInput");
+	if (lastInput) groupInput.value = lastInput;
+
+	// Ввод текста
+	groupInput.addEventListener("input", function () {
+		const inputValue = this.value.toLowerCase();
+		localStorage.setItem("lastInput", this.value);
+
+		if (!inputValue) {
+			suggestionsContainer.style.display = "none";
+			return;
+		}
+
+		// Фильтруем подсказки и ограничиваем до 10 элементов
+		const filtered = suggestions
+			.filter((s) =>
+				s.name.toLowerCase().includes(inputValue)
+			)
+			.slice(0, 10);
+
+		if (!filtered.length) {
+			suggestionsContainer.style.display = "none";
+			return;
+		}
+
+		// Очищаем контейнер
+		suggestionsContainer.innerHTML = "";
+
+		// Добавляем подсказки
+		filtered.forEach((suggestion) => {
+			const item = document.createElement("a");
+			item.className =
+				"list-group-item list-group-item-action";
+			let badgeColor = "primary";
+			if (suggestion.type === "Teacher")
+				badgeColor = "success";
+			else if (suggestion.type === "Classroom")
+				badgeColor = "info";
+
+			item.innerHTML = `${suggestion.name} <span class="badge rounded-pill bg-${badgeColor} badge-type">${suggestion.type}</span>`;
+			item.href = "#";
+
+			item.addEventListener("click", (e) => {
+				e.preventDefault();
+				groupInput.value = suggestion.name;
+				groupInput.dataset.selectedSuggestion = "true";
+				suggestionsContainer.style.display = "none";
+
+				localStorage.setItem(
+					"lastInput",
+					suggestion.name
+				);
+				localStorage.setItem(
+					"lastGroup",
+					suggestion.name
+				);
+
+				searchForm.submit();
+			});
+
+			suggestionsContainer.appendChild(item);
+		});
+
+		// Показываем контейнер
+		suggestionsContainer.style.display = "block";
+	});
+
+	// Скрытие подсказок при потере фокуса
+	groupInput.addEventListener("blur", () => {
+		setTimeout(
+			() => (suggestionsContainer.style.display = "none"),
+			200
+		);
+	});
+
+	// Показ при фокусе
+	groupInput.addEventListener("focus", () => {
+		if (groupInput.value.length > 0) {
+			suggestionsContainer.style.display = "block";
+		}
+	});
+
+	// Закрытие при клике вне области
+	document.addEventListener("click", (e) => {
+		if (
+			!suggestionsContainer.contains(e.target) &&
+			e.target !== groupInput
+		) {
+			suggestionsContainer.style.display = "none";
+		}
+	});
 });

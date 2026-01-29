@@ -1,7 +1,7 @@
 {% extends "base.html" %} {% block header %}
 <div class="d-flex justify-content-between align-items-center">
 	<a
-		href="/?group_name={{ group_info.SearchString }}{% if prev_week_id is not none %}&week_id={{ prev_week_id }}{% endif %}"
+		href="/group/?group_name={{ group_info.SearchString }}{% if prev_week_id is not none %}&week_id={{ prev_week_id }}{% endif %}"
 		class="btn btn-sm btn-outline-light mx-2 {% if not prev_week_id %}disabled{% endif %}"
 	>
 		<i class="bi bi-chevron-left"></i>
@@ -12,7 +12,7 @@
 	</h4>
 
 	<a
-		href="/?group_name={{ group_info.SearchString }}{% if next_week_id is not none %}&week_id={{ next_week_id }}{% endif %}"
+		href="/group/?group_name={{ group_info.SearchString }}{% if next_week_id is not none %}&week_id={{ next_week_id }}{% endif %}"
 		class="btn btn-sm btn-outline-light mx-2 {% if not next_week_id %}disabled{% endif %}"
 	>
 		<i class="bi bi-chevron-right"></i>
@@ -24,7 +24,7 @@
 >
 	{% for day in days_list %}
 	<a
-		href="/?group_name={{ group_info.SearchString }}{% if week_id is not none %}&week_id={{ week_id }}{% endif %}&day={{ day.split(' ')[0] }}"
+		href="/group/?group_name={{ group_info.SearchString }}{% if week_id is not none %}&week_id={{ week_id }}{% endif %}&day={{ day.split(' ')[0] }}"
 		class="btn btn-sm mb-1 {% if active_day and day.split(' ')[0] == active_day.split(' ')[0] %}btn-light text-primary fw-bold{% else %}btn-outline-light{% endif %}"
 	>
 		{{ day.split(" ")[1].split(".")[0] }}
@@ -48,8 +48,57 @@ schedule.items() %}
 			>
 				{% if lesson_list %} {% for lesson in lesson_list
 				%}
-				<!-- Блок урока без изменений -->
-				{{ super() }} {% endfor %} {% endif %}
+				<div
+					class="lesson {% if lesson_list|length > 1 %}multiple-lesson{% endif %} {% if not lesson.subject %}empty-lesson{% if 'Сб' in day or 'Вс' in day %} weekend-empty{% endif %}{% endif %}"
+				>
+					<div class="lesson-content">
+						{% if lesson.time %}
+						<div class="time">
+							<i class="bi bi-clock"></i>
+							{% if lesson_list|length > 1 %}<small
+								>Часть {{ loop.index }}:</small
+							>{% endif %} {{ lesson.time }}
+						</div>
+						{% endif %} {% if lesson.subject %}
+						<div class="subject">
+							<i class="bi bi-book"></i> {{
+							lesson.subject[:-1] }}
+						</div>
+						{% if lesson.teacher %}
+						<div class="teacher">
+							<i class="bi bi-person"></i> {{
+							lesson.teacher[:-1] }}
+						</div>
+						{% endif %} {% if lesson.room %}
+						<div class="room">
+							<i class="bi bi-geo-alt"></i> {{
+							lesson.room }}
+						</div>
+						{% endif %} {% if lesson.group and
+						(group_info.Type == "Teacher" or
+						group_info.Type == "Classroom") %}
+						<div class="group">
+							<i class="bi bi-people"></i> {{
+							lesson.group }}
+						</div>
+						{% endif %} {% else %}
+						<div class="empty-lesson-content">
+							<div class="empty-lesson-icon">
+								<i class="bi bi-emoji-smile"></i>
+							</div>
+							<div class="empty-lesson-text">
+								Нет пары
+							</div>
+							<div class="empty-lesson-subtext">
+								Можно отдохнуть
+							</div>
+						</div>
+						{% endif %}
+					</div>
+				</div>
+				{% if not loop.last %}
+				<hr class="lesson-divider" />
+				{% endif %} {% endfor %} {% endif %}
 			</li>
 			{% endfor %}
 		</ul>
@@ -57,9 +106,12 @@ schedule.items() %}
 		<div
 			class="d-flex flex-column align-items-center justify-content-center p-5"
 		>
-			<span style="font-size: 3em">🏖️</span>
-			<p class="mt-3 fs-5 text-center">Выходной день</p>
-			<small class="text-muted">Пар нет</small>
+			<p class="mt-3 fs-5 text-center text-muted">
+				На этой неделе пар нет
+			</p>
+			<small class="text-muted"
+				>Учебная неделя не запланирована</small
+			>
 		</div>
 		{% endif %}
 	</div>
