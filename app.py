@@ -1,10 +1,8 @@
 from flask import Flask, render_template, request
 from routes.group import bp_group
 from routes.main import bp_main
-from routes.info import bp_info
 from werkzeug.exceptions import HTTPException
 import traceback
-
 
 def create_app():
     app = Flask(__name__)
@@ -12,13 +10,14 @@ def create_app():
     # Роуты
     app.register_blueprint(bp_main)
     app.register_blueprint(bp_group, url_prefix="/group")
-    app.register_blueprint(bp_info, url_prefix="/info")
 
     # Глобальный перехват ошибок
     @app.errorhandler(Exception)
     def handle_exception(e):
+        # Логирование ошибки в консоль
+        traceback.print_exc()
 
-        # HTTP ошибки (404, 403 и т.д.)
+        # Если это HTTP ошибка, используем её код и описание
         if isinstance(e, HTTPException):
             return render_template(
                 "errors/error.html",
@@ -27,18 +26,7 @@ def create_app():
                 description=e.description
             ), e.code
 
-        # Python ошибки (TypeError, ValueError, etc)
-        traceback.print_exc()
-
-        return render_template(
-            "errors/error.html",
-            code=500,
-            name=type(e).__name__,
-            description="Внутренняя ошибка сервера"
-        ), 500
-
     return app
-
 
 if __name__ == "__main__":
     app = create_app()

@@ -1,3 +1,39 @@
+//  ========== INFO MODAL ==========
+
+const modalInfo = document.getElementById("modalInfo");
+
+document.getElementById("openModalInfo").onclick = (e) => {
+	e.preventDefault();
+	modalInfo.style.display = "block";
+};
+
+document.getElementById("closeModalInfo").onclick = () => {
+	modalInfo.style.display = "none";
+};
+
+//  ========== SETTINGS MODAL ==========
+
+const modalSettings = document.getElementById("modalSettings");
+
+document.getElementById("openModalSettings").onclick = (e) => {
+	e.preventDefault();
+	modalSettings.style.display = "block";
+};
+
+document.getElementById("closeModalSettings").onclick = () => {
+	modalSettings.style.display = "none";
+};
+
+// ========== GLOBAL MODAL ==========
+
+window.onclick = (e) => {
+	if (e.target === modal) {
+		modal.style.display = "none";
+	}
+};
+
+// ========== GLOBAL ==========
+
 document.addEventListener("DOMContentLoaded", function () {
 	const groupInput = document.getElementById("group-input");
 	const suggestionsContainer = document.getElementById(
