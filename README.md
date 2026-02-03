@@ -22,5 +22,6 @@
 ### Запуск программы
 
 ```bash
+pip install bs4 requests flask
 python app.py
 ```
