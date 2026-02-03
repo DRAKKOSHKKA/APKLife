@@ -16,8 +16,8 @@
 Проект построен на следующих технологиях:
 
 - **Frontend:** HTML, CSS, JavaScript
-- **Backend:** Python (Flask / FastAPI) _(если у тебя Flask)_
-- **База данных:** JSON или SQL _(в зависимости от реализации)_
+- **Backend:** Python (Flask | FastAPI)
+- **База данных:** JSON
 
 ### Запуск программы
 
