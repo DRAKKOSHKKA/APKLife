@@ -1,29 +1,47 @@
+:root {
+	--primary: #0d6efd;
+	--primary-soft: rgba(13, 110, 253, 0.08);
+	--surface: #ffffff;
+	--surface-muted: #f6f7f9;
+	--border: #e4e7ec;
+	--text: #1f2937;
+	--text-muted: #6b7280;
+	--shadow-soft: 0 4px 16px rgba(15, 23, 42, 0.08);
+}
+
+body {
+	background-color: var(--surface-muted);
+	color: var(--text);
+}
+
 .lesson-slot {
-	background: linear-gradient(90deg, #f8f9fa 0%, #e9ecef 100%);
-	border-radius: 12px;
-	margin-bottom: 14px;
-	box-shadow: 0 6px 24px rgba(13, 110, 253, 0.1);
+	background: linear-gradient(135deg, #f8fafc 0%, #eef2f7 100%);
+	border-radius: 14px;
+	margin-bottom: 16px;
+	box-shadow: var(--shadow-soft);
 	transition:
 		box-shadow 0.2s,
+		transform 0.2s,
 		background 0.2s;
-	border: none;
-	padding: 0.7em 1em;
+	border: 1px solid var(--border);
+	padding: 0.8em 1.1em;
 }
 .lesson-slot:hover {
-	box-shadow: 0 12px 36px rgba(13, 110, 253, 0.18);
-	background: linear-gradient(90deg, #e9ecef 0%, #f8f9fa 100%);
+	transform: translateY(-2px);
+	box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+	background: linear-gradient(135deg, #f1f5f9 0%, #e7edf4 100%);
 }
 
 .lesson {
-	padding: 22px 16px 14px 16px;
-	border-bottom: none;
+	padding: 14px 16px;
 	border-radius: 12px;
-	background: #fff;
-	margin-bottom: 2px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+	background: var(--surface);
+	margin-bottom: 6px;
+	border: 1px solid var(--border);
+	box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
 }
 .lesson:last-child {
-	border-bottom: none;
+	margin-bottom: 0;
 }
 
 .empty-slot {
@@ -38,20 +56,20 @@
 
 header .day-nav .btn-outline-light:hover {
 	color: #fff;
-	background-color: #0d6efd;
-	border-color: #0d6efd;
+	background-color: var(--primary);
+	border-color: var(--primary);
 }
 /* Активная кнопка дня недели (класс .btn-light используется в шаблоне) */
 header .day-nav .btn.btn-light {
-	background-color: #0d6efd;
-	border-color: #0d6efd;
+	background-color: var(--primary);
+	border-color: var(--primary);
 	color: #fff !important; /* Перебиваем класс text-primary из шаблона */
 }
 
 .btn-outline-light {
-	color: rgb(182, 182, 182);
-	border-color: rgb(182, 182, 182);
-	background-color: #eeeeee;
+	color: var(--text);
+	border-color: var(--border);
+	background-color: #f1f3f5;
 }
 
 .day-nav {
@@ -66,27 +84,18 @@ header .day-nav .btn.btn-light {
 	min-width: 45px;
 	border-radius: 8px;
 	flex-shrink: 0;
-	color: #121212;
-	background-color: #eeeeee;
-	border-color: rgb(197, 197, 197);
+	color: var(--text);
+	background-color: #f1f3f5;
+	border-color: var(--border);
 }
 
 .weekend {
 	color: #fff;
 }
 
-/* Урок */
-.lesson {
-	padding: 12px;
-	border-bottom: 1px solid #e0e0e0;
-}
-.lesson:last-child {
-	border-bottom: none;
-}
-
 .time {
 	font-weight: bold;
-	color: #0d6efd;
+	color: var(--primary);
 }
 
 .subject {
@@ -97,7 +106,7 @@ header .day-nav .btn.btn-light {
 
 .teacher {
 	font-size: 0.9em;
-	color: gray;
+	color: var(--text-muted);
 	word-break: break-word;
 }
 
