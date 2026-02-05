@@ -40,9 +40,9 @@ def get_group_info(search_string):
         "SearchProductName": search_string
     }
     try:
-        response = requests.get(url, params=params)
+        response = requests.get(url, params=params, timeout=10)
         response.raise_for_status()
-        data = json.loads(response.text)
+        data = response.json()
         if not data:
             return None, None
         for result in data:
@@ -60,7 +60,7 @@ def get_group_info(search_string):
             "OwnerId": first_result.get('OwnerId'),
             "Type": first_result.get('Type')
         }, first_result.get('SearchContent')
-    except (requests.exceptions.RequestException, json.JSONDecodeError) as e:
+    except (requests.exceptions.RequestException, ValueError) as e:
         print(f"Ошибка при поиске: {e}")
         return None, None
 
@@ -74,12 +74,21 @@ def get_schedule(week_id, entity_info):
     entity_type = entity_info['Type']
 
     url = f"https://it-institut.ru/Raspisanie/SearchedRaspisanie?SearchId={search_id}&SearchString={search_string}&Type={entity_type}&OwnerId={owner_id}&WeekId={week_id}"
-    response = requests.get(url)
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        print(f"Ошибка при загрузке расписания: {e}")
+        return {}, [], None, None
+
     response.encoding = "utf-8"
     soup = BeautifulSoup(response.text, "html.parser")
 
     time_headers = []
-    header_row = soup.select("thead tr")[0]
+    header_rows = soup.select("thead tr")
+    if not header_rows:
+        return {}, [], None, None
+    header_row = header_rows[0]
     for th in header_row.find_all("th")[1:]:
         colspan = int(th.get('colspan', 1))
         time_text = th.get_text(strip=True)
@@ -104,14 +113,14 @@ def get_schedule(week_id, entity_info):
                 part_end = part_start + part_minutes
                 time_intervals.append(f"{minutes_to_time(part_start)}-{minutes_to_time(part_end)}")
             return time_intervals
-        except:
+        except (ValueError, TypeError):
             return [time_range] * num_parts
 
     def time_to_minutes(time_str):
         try:
             hours, minutes = map(int, time_str.split(':'))
             return hours * 60 + minutes
-        except:
+        except (ValueError, TypeError):
             return 0
 
     def minutes_to_time(minutes):
@@ -225,5 +234,3 @@ def get_schedule(week_id, entity_info):
                 next_week_id = int(match.group(1))
 
     return schedule, days_list, prev_week_id, next_week_id
-
-#print(json.dumps(get_schedule(14585, get_group_info("11 нмо")[0]), indent=4, sort_keys=True, ensure_ascii=False))
