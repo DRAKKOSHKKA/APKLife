@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template
 from routes.group import bp_group
 from routes.main import bp_main
 from werkzeug.exceptions import HTTPException
@@ -25,6 +25,12 @@ def create_app():
                 name=e.name,
                 description=e.description
             ), e.code
+        return render_template(
+            "errors/error.html",
+            code=500,
+            name="Internal Server Error",
+            description="Произошла непредвиденная ошибка."
+        ), 500
 
     return app
 
