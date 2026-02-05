@@ -27,8 +27,11 @@ document.getElementById("closeModalSettings").onclick = () => {
 // ========== GLOBAL MODAL ==========
 
 window.onclick = (e) => {
-	if (e.target === modal) {
-		modal.style.display = "none";
+	if (e.target === modalInfo) {
+		modalInfo.style.display = "none";
+	}
+	if (e.target === modalSettings) {
+		modalSettings.style.display = "none";
 	}
 };
 

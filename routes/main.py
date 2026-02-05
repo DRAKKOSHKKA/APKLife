@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template
 from services.utils_schedule import get_current_week, get_current_day_name
 
 bp_main = Blueprint("main", __name__)
