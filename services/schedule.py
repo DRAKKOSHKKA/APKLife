@@ -1,5 +1,11 @@
 import datetime
-from services.utils_schedule import get_group_info, get_schedule, get_current_week
+
+from services.utils_schedule import (
+    get_cached_entity_info,
+    get_current_week,
+    get_group_info,
+    get_schedule,
+)
 
 
 def build_base_context():
@@ -14,6 +20,9 @@ def build_base_context():
         "error": None,
         "corrected_name": None,
         "no_lessons_week": True,
+        "schedule_source": None,
+        "schedule_message": None,
+        "cache_updated_at": None,
     }
 
 
@@ -27,7 +36,7 @@ def detect_active_day(schedule, day_param):
                 return day
 
     weekday = datetime.datetime.now().weekday()
-    ru_days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
+    ru_days = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
     today = ru_days[weekday]
 
     for day in schedule.keys():
@@ -40,7 +49,7 @@ def detect_active_day(schedule, day_param):
 def load_schedule_context(args):
     context = build_base_context()
 
-    group_name = args.get("group_name")
+    group_name = (args.get("group_name") or "").strip()
     week_id = args.get("week_id", type=int)
     day = args.get("day")
 
@@ -52,12 +61,17 @@ def load_schedule_context(args):
 
     entity_info, corrected_name = get_group_info(group_name)
     if not entity_info:
-        context["error"] = f"'{group_name}' не найдено"
-        return context
+        cached_entity = get_cached_entity_info(group_name)
+        if cached_entity:
+            entity_info = cached_entity
+            corrected_name = cached_entity.get("SearchString")
+        else:
+            context["error"] = f"'{group_name}' не найдено"
+            return context
 
-    schedule, days_list, prev_week, next_week = get_schedule(
+    schedule, days_list, prev_week, next_week, source_meta = get_schedule(
         week_id or get_current_week(),
-        entity_info
+        entity_info,
     )
 
     active_day = detect_active_day(schedule, day)
@@ -65,15 +79,23 @@ def load_schedule_context(args):
     if active_day:
         schedule = {active_day: schedule[active_day]}
 
-    context.update({
-        "group_info": entity_info,
-        "schedule": schedule,
-        "days_list": days_list,
-        "prev_week_id": prev_week,
-        "next_week_id": next_week,
-        "active_day": active_day,
-        "corrected_name": corrected_name,
-        "no_lessons_week": not bool(schedule)
-    })
+    context.update(
+        {
+            "group_info": entity_info,
+            "schedule": schedule,
+            "days_list": days_list,
+            "prev_week_id": prev_week,
+            "next_week_id": next_week,
+            "active_day": active_day,
+            "corrected_name": corrected_name,
+            "no_lessons_week": not bool(schedule),
+            "schedule_source": source_meta.get("source"),
+            "schedule_message": source_meta.get("message"),
+            "cache_updated_at": source_meta.get("cache_updated_at"),
+        }
+    )
+
+    if not schedule and source_meta.get("source") == "none":
+        context["error"] = source_meta.get("message")
 
     return context
