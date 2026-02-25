@@ -1,17 +1,58 @@
+:root {
+	--surface: #ffffff;
+	--surface-muted: #f8f9fa;
+	--text: #212529;
+	--accent: #0d6efd;
+	--border: #dee2e6;
+}
+
+body {
+	background: #f3f6fb;
+	color: var(--text);
+}
+
 header {
-	padding: 12px 6px 6px;
+	padding: 12px 8px 6px;
+}
+
+.subtitle {
+	font-size: 0.9rem;
+	color: #6c757d;
+}
+
+.search-card {
+	border: 1px solid var(--border);
+}
+
+.version-alert,
+.schedule-alert {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.version-line {
+	display: flex;
+	gap: 10px;
+	flex-wrap: wrap;
+}
+
+.version-meta,
+.cache-updated-at {
+	font-size: 0.78rem;
+	opacity: 0.85;
 }
 
 .day-nav {
 	overflow-x: auto;
 	-webkit-overflow-scrolling: touch;
 	flex-wrap: nowrap !important;
-	gap: 5px;
+	gap: 6px;
 	padding: 8px;
 }
 
 .day-nav .btn {
-	min-width: 45px;
+	min-width: 56px;
 	border-radius: 8px;
 	flex-shrink: 0;
 	color: #121212;
@@ -20,7 +61,7 @@ header {
 }
 
 .btn-outline-light {
-	color: #6a6a6a;
+	color: #5f6368;
 	border-color: #b6b6b6;
 	background-color: #eee;
 }
@@ -28,8 +69,8 @@ header {
 header .day-nav .btn-outline-light:hover,
 header .day-nav .btn.btn-light {
 	color: #fff !important;
-	background-color: #0d6efd;
-	border-color: #0d6efd;
+	background-color: var(--accent);
+	border-color: var(--accent);
 }
 
 #suggestions-container {
@@ -41,11 +82,6 @@ header .day-nav .btn.btn-light {
 	display: none;
 	max-height: 220px;
 	overflow-y: auto;
-}
-
-#suggestions-container a.list-group-item {
-	cursor: pointer;
-	padding: 8px 12px;
 }
 
 #suggestions-container a.list-group-item:hover {
@@ -63,12 +99,12 @@ header .day-nav .btn.btn-light {
 }
 
 .lesson {
-	padding: 18px;
+	padding: 16px;
 	border: 1px solid #e9ecef;
 	border-radius: 14px;
-	background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+	background: linear-gradient(135deg, #fff 0%, #f7f9ff 100%);
 	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-	transition: all 0.25s ease;
+	transition: all 0.2s ease;
 	position: relative;
 	overflow: hidden;
 }
@@ -108,13 +144,13 @@ header .day-nav .btn.btn-light {
 
 .time {
 	font-weight: 700;
-	font-size: 1.05em;
+	font-size: 1.02em;
 	color: #0d6efd;
 	background: rgba(13, 110, 253, 0.1);
 }
 
 .subject {
-	font-size: 1.1em;
+	font-size: 1.05em;
 	font-weight: 600;
 	word-break: break-word;
 	background: rgba(108, 117, 125, 0.06);
@@ -142,20 +178,6 @@ header .day-nav .btn.btn-light {
 	color: #6c757d;
 }
 
-.empty-lesson-icon {
-	font-size: 2rem;
-}
-
-.empty-lesson-text {
-	font-size: 1.05rem;
-	font-weight: 500;
-}
-
-.empty-lesson-subtext {
-	font-size: 0.9rem;
-	opacity: 0.85;
-}
-
 .multiple-lesson {
 	background: linear-gradient(135deg, #e8f4fd 0%, #d1e9fa 100%);
 	border-color: #b8d4f0;
@@ -167,7 +189,7 @@ header .day-nav .btn.btn-light {
 }
 
 .lesson-divider {
-	margin: 12px 0;
+	margin: 10px 0;
 	border: none;
 	height: 1px;
 	background: linear-gradient(to right, transparent, #dee2e6, transparent);
@@ -179,14 +201,16 @@ header .day-nav .btn.btn-light {
 	inset: 0;
 	background: rgba(0, 0, 0, 0.6);
 	z-index: 1000;
+	padding: 16px;
+	overflow-y: auto;
 }
 
 .cn-modal-content {
-	width: min(90%, 520px);
-	margin: 12% auto;
+	width: min(92%, 560px);
+	margin: 8% auto;
 	padding: 20px;
 	background: #f8f9fa;
-	border-radius: 8px;
+	border-radius: 10px;
 	color: #121212;
 }
 
@@ -195,47 +219,101 @@ header .day-nav .btn.btn-light {
 }
 
 .info-text {
-	margin: 0 0 15px;
+	margin: 0 0 14px;
 }
 
 .settings-title {
 	padding-bottom: 15px;
 }
 
-@media (min-width: 768px) {
+.app-footer {
+	backdrop-filter: saturate(180%) blur(4px);
+}
+
+@media (max-width: 575px) {
 	.container {
-		max-width: 800px;
-		margin: auto;
-		padding-left: 20px;
-		padding-right: 20px;
+		padding-left: 10px;
+		padding-right: 10px;
 	}
 
 	header {
-		padding: 15px;
+		padding: 10px 4px 4px;
+	}
+
+	.schedule-title {
+		font-size: 1rem;
+		text-align: center;
+	}
+
+	.lesson {
+		padding: 14px;
+	}
+
+	.time,
+	.subject,
+	.teacher,
+	.room,
+	.group {
+		padding: 7px 10px;
+		font-size: 0.92rem;
+	}
+
+	.cn-modal-content {
+		margin: 24% auto;
+	}
+}
+
+@media (min-width: 576px) and (max-width: 991px) {
+	.container {
+		max-width: 900px;
+	}
+
+	.day-nav {
+		flex-wrap: wrap !important;
+		justify-content: center;
+	}
+
+	.day-nav .btn {
+		min-width: 74px;
+	}
+
+	.schedule-title {
+		font-size: 1.25rem;
+	}
+}
+
+@media (min-width: 992px) {
+	.container {
+		max-width: 980px;
+	}
+
+	header {
+		padding: 18px;
 	}
 
 	.day-nav {
 		overflow-x: hidden;
 		flex-wrap: wrap !important;
 		justify-content: center;
-		padding: 15px;
+		padding: 12px;
 	}
 
 	.day-nav .btn {
-		min-width: 80px;
-		margin: 5px;
+		min-width: 90px;
 	}
-}
 
-@media (max-width: 768px) {
-	.cn-modal-content {
-		margin: 25% auto;
+	.schedule-title {
+		font-size: 1.5rem;
 	}
 }
 
 body.dark-mode {
 	background-color: #121212;
 	color: #e0e0e0;
+}
+
+body.dark-mode .subtitle {
+	color: #a8adb3;
 }
 
 body.dark-mode header {
@@ -246,14 +324,11 @@ body.dark-mode header {
 body.dark-mode .card,
 body.dark-mode .list-group-item,
 body.dark-mode .form-control,
-body.dark-mode .cn-modal-content {
+body.dark-mode .cn-modal-content,
+body.dark-mode .alert-secondary {
 	background-color: #1e1e1e;
 	color: #e0e0e0;
 	border-color: #333;
-}
-
-body.dark-mode .form-control::placeholder {
-	color: #888;
 }
 
 body.dark-mode .navbar {
@@ -262,8 +337,9 @@ body.dark-mode .navbar {
 }
 
 body.dark-mode .nav-link,
-body.dark-mode .form-check-label {
-	color: #e0e0e0 !important;
+body.dark-mode .form-check-label,
+body.dark-mode .text-muted {
+	color: #c8cdd2 !important;
 }
 
 body.dark-mode .btn-outline-light {
@@ -278,13 +354,12 @@ body.dark-mode header .day-nav .btn.btn-light {
 	color: #000 !important;
 }
 
-body.dark-mode #suggestions-container a.list-group-item:hover,
-body.dark-mode .list-group-item:hover {
+body.dark-mode #suggestions-container a.list-group-item:hover {
 	background-color: #2a2a2a;
 }
 
 body.dark-mode .lesson {
-	background: linear-gradient(135deg, #2a2a2a 0%, #1e1e1e 100%);
+	background: linear-gradient(135deg, #2a2a2a 0%, #1f1f1f 100%);
 	border-color: #333;
 }
 
@@ -303,21 +378,6 @@ body.dark-mode .room,
 body.dark-mode .group,
 body.dark-mode .empty-lesson-content {
 	color: #b0b0b0;
-}
-
-body.dark-mode .empty-lesson {
-	background: linear-gradient(135deg, #2a2a2a 0%, #3a3a3a 100%);
-	border-color: #444;
-}
-
-body.dark-mode .multiple-lesson {
-	background: linear-gradient(135deg, #2d4b5b 0%, #1e3a48 100%);
-	border-color: #2c5364;
-}
-
-body.dark-mode .weekend-empty {
-	background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
-	border-color: #5c6bc0;
 }
 
 body.dark-mode .lesson-divider {
