@@ -23,6 +23,8 @@ header {
 	border-radius: 14px;
 	border: 1px solid var(--border);
 	box-shadow: 0 6px 20px rgba(18, 38, 63, 0.06);
+header {
+	padding: 12px 6px 6px;
 }
 
 .day-nav {
@@ -46,6 +48,11 @@ header {
 	color: #5f6670;
 	border-color: #ccd3dd;
 	background-color: #eef1f6;
+}
+
+.btn-outline-light {
+	color: #6a6a6a;
+	border-color: #b6b6b6;
 }
 
 header .day-nav .btn-outline-light:hover,
@@ -73,6 +80,7 @@ header .day-nav .btn.btn-light {
 
 #suggestions-container a.list-group-item:hover {
 	background-color: var(--primary-soft);
+	background-color: rgba(13, 110, 253, 0.1);
 }
 
 .badge-type {
