@@ -1,4 +1,18 @@
 from datetime import datetime
+from pathlib import Path
+
+import requests
+from bs4 import BeautifulSoup
+
+SEARCH_URL = "https://it-institut.ru/SearchString/KeySearch"
+SCHEDULE_URL_TEMPLATE = (
+    "https://it-institut.ru/Raspisanie/SearchedRaspisanie"
+    "?SearchId={search_id}&SearchString={search_string}&Type={entity_type}&OwnerId={owner_id}&WeekId={week_id}"
+)
+REQUEST_TIMEOUT_SECONDS = 30
+CACHE_DIR = Path("cache")
+CACHE_FILE = CACHE_DIR / "schedule_cache.json"
+
 
 import requests
 
