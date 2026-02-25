@@ -1,11 +1,15 @@
+"""Validation and normalization helpers for schedule-related payloads."""
+
 from datetime import datetime
 
 
 def normalize_search_string(value):
+    """Normalize user search input string."""
     return (value or "").strip()
 
 
 def validate_entity_info(entity_info):
+    """Validate that entity descriptor contains required fields."""
     if not isinstance(entity_info, dict):
         return False
     required_keys = {"SearchId", "SearchString", "OwnerId", "Type"}
@@ -15,6 +19,7 @@ def validate_entity_info(entity_info):
 
 
 def validate_cache_timestamp(value):
+    """Validate cache timestamp in ISO format."""
     if not value:
         return None
     try:
@@ -24,6 +29,7 @@ def validate_cache_timestamp(value):
 
 
 def normalize_lesson(lesson):
+    """Normalize lesson payload and always return schema-compatible dict."""
     if not isinstance(lesson, dict):
         return {
             "time": None,
@@ -42,6 +48,7 @@ def normalize_lesson(lesson):
 
 
 def validate_schedule_payload(schedule):
+    """Validate nested schedule structure and normalize invalid fragments."""
     if not isinstance(schedule, dict):
         return {}
 

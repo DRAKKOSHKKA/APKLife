@@ -1,3 +1,7 @@
+/**
+ * Frontend interactions: modals, dark mode, suggestions, PWA and DEV mode.
+ */
+
 const modalInfo = document.getElementById("modalInfo");
 const modalSettings = document.getElementById("modalSettings");
 
@@ -5,6 +9,50 @@ const openInfoBtn = document.getElementById("openModalInfo");
 const closeInfoBtn = document.getElementById("closeModalInfo");
 const openSettingsBtn = document.getElementById("openModalSettings");
 const closeSettingsBtn = document.getElementById("closeModalSettings");
+const offlineIndicator = document.getElementById("offline-indicator");
+
+const DEV_KEY = "devMode";
+
+function setOfflineIndicator(isOffline) {
+	if (!offlineIndicator) return;
+	offlineIndicator.classList.toggle("d-none", !isOffline);
+}
+
+function applyDevModeState() {
+	const enabled = localStorage.getItem(DEV_KEY) === "true";
+	const panel = document.getElementById("dev-panel");
+	const toggleWrap = document.getElementById("dev-mode-toggle-wrap");
+	const switcher = document.getElementById("devModeSwitch");
+	if (switcher) switcher.checked = enabled;
+	if (toggleWrap) toggleWrap.classList.toggle("d-none", !enabled);
+	if (panel) panel.classList.toggle("d-none", !enabled);
+	return enabled;
+}
+
+function enableDevMode() {
+	localStorage.setItem(DEV_KEY, "true");
+	applyDevModeState();
+}
+
+async function loadDevData() {
+	if (localStorage.getItem(DEV_KEY) !== "true") return;
+	const status = document.getElementById("dev-status");
+	if (status) {
+		status.textContent = JSON.stringify(window.__SERVER_STATE__ || {}, null, 2);
+	}
+}
+
+async function loadLogs() {
+	const logsEl = document.getElementById("dev-logs");
+	if (!logsEl) return;
+	try {
+		const response = await fetch("/group/logs");
+		const payload = await response.json();
+		logsEl.textContent = (payload.lines || []).join("\n") || "no logs";
+	} catch (error) {
+		logsEl.textContent = `log error: ${error}`;
+	}
+}
 
 if (openInfoBtn && modalInfo) {
 	openInfoBtn.onclick = (event) => {
@@ -20,9 +68,10 @@ if (closeInfoBtn && modalInfo) {
 }
 
 if (openSettingsBtn && modalSettings) {
-	openSettingsBtn.onclick = (event) => {
+	openSettingsBtn.onclick = async (event) => {
 		event.preventDefault();
 		modalSettings.style.display = "block";
+		await loadDevData();
 	};
 }
 
@@ -41,11 +90,61 @@ window.addEventListener("click", (event) => {
 	}
 });
 
+async function refreshScheduleInBackground() {
+	const scheduleContent = document.getElementById("schedule-content");
+	if (!scheduleContent) return;
+
+	const refreshUrl = scheduleContent.dataset.refreshUrl;
+	if (!refreshUrl) return;
+
+	try {
+		const response = await fetch(refreshUrl, { method: "GET" });
+		const payload = await response.json();
+		if (payload?.ok && payload?.html) {
+			scheduleContent.innerHTML = payload.html;
+			window.__SERVER_STATE__ = {
+				...(window.__SERVER_STATE__ || {}),
+				offline: !!payload.offline,
+				cacheState: payload.cache_state,
+				metrics: payload.metrics,
+			};
+			setOfflineIndicator(!!payload.offline || !navigator.onLine);
+		}
+	} catch (error) {
+		console.warn("Background refresh skipped:", error);
+	}
+}
+
+function registerServiceWorker() {
+	if (!("serviceWorker" in navigator)) return;
+	navigator.serviceWorker.register("/static/sw.js").catch((error) => {
+		console.warn("Service worker registration failed:", error);
+	});
+}
+
+function setupDevModeUnlock() {
+	const target = document.getElementById("dev-tap-target");
+	if (!target) return;
+
+	let taps = [];
+	target.addEventListener("click", () => {
+		const now = Date.now();
+		taps = taps.filter((t) => now - t < 10000);
+		taps.push(now);
+		if (taps.length >= 10) {
+			enableDevMode();
+			taps = [];
+		}
+	});
+}
+
 document.addEventListener("DOMContentLoaded", () => {
 	const groupInput = document.getElementById("group-input");
 	const suggestionsContainer = document.getElementById("suggestions-container");
 	const searchForm = document.getElementById("searchForm");
 	const darkModeSwitch = document.getElementById("darkModeSwitch");
+	const devModeSwitch = document.getElementById("devModeSwitch");
+	const loadLogsBtn = document.getElementById("loadLogsBtn");
 	const body = document.body;
 
 	let suggestions = [];
@@ -59,6 +158,29 @@ document.addEventListener("DOMContentLoaded", () => {
 			localStorage.setItem("darkMode", String(this.checked));
 		});
 	}
+
+	if (devModeSwitch) {
+		devModeSwitch.addEventListener("change", function () {
+			localStorage.setItem(DEV_KEY, String(this.checked));
+			applyDevModeState();
+		});
+	}
+
+	if (loadLogsBtn) {
+		loadLogsBtn.addEventListener("click", () => {
+			void loadLogs();
+		});
+	}
+
+	applyDevModeState();
+	setupDevModeUnlock();
+	registerServiceWorker();
+	setOfflineIndicator((window.__SERVER_STATE__ && window.__SERVER_STATE__.offline) || !navigator.onLine);
+
+	window.addEventListener("online", () => setOfflineIndicator(false));
+	window.addEventListener("offline", () => setOfflineIndicator(true));
+
+	void refreshScheduleInBackground();
 
 	fetch("/static/suggestions.json")
 		.then((response) => response.json())
