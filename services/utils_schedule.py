@@ -1,236 +1,292 @@
-import requests
-from bs4 import BeautifulSoup
-import re
-import json
+"""Main schedule integration service with cache-first and network-refresh strategies."""
+
+from __future__ import annotations
+
 from datetime import datetime
+from time import perf_counter
+from typing import Any
 
-def get_current_day_name():
-    """
-    Возвращает название текущего дня недели на русском.
-    """
+from services.cache_store import (
+    build_cache_key,
+    get_schedule_cache,
+    read_cache_data,
+    upsert_schedule_cache,
+)
+from services.config import settings
+from services.exceptions import (
+    ScheduleError,
+    ScheduleFetchError,
+    ScheduleParseError,
+    ScheduleSchemaChangedError,
+)
+from services.http_client import http_client
+from services.logger import setup_logger
+from services.metrics import inc, mark_source, set_value
+from services.sources.html_source import InstituteHtmlScheduleSource
+from services.types import CacheMeta
+from services.validators import normalize_search_string, validate_entity_info
+
+logger = setup_logger("schedule")
+source = InstituteHtmlScheduleSource()
+
+
+def get_current_day_name() -> str:
+    """Return current day name in Russian."""
     days_ru = {
-        'Monday': 'Понедельник',
-        'Tuesday': 'Вторник',
-        'Wednesday': 'Среда',
-        'Thursday': 'Четверг',
-        'Friday': 'Пятница',
-        'Saturday': 'Суббота',
-        'Sunday': 'Воскресенье'
+        "Monday": "Понедельник",
+        "Tuesday": "Вторник",
+        "Wednesday": "Среда",
+        "Thursday": "Четверг",
+        "Friday": "Пятница",
+        "Saturday": "Суббота",
+        "Sunday": "Воскресенье",
     }
-    today = datetime.now()
-    eng_day = today.strftime('%A')
-    return days_ru[eng_day]
+    return days_ru[datetime.now().strftime("%A")]
 
-def get_current_week():
-    """
-    Возвращает номер текущей недели по системе сайта.
-    29 января 2026 = 14585.
-    """
+
+def get_current_week() -> int:
+    """Return current week id according to source platform formula."""
     today = datetime.now()
     epoch = datetime(1970, 1, 1)
-    days_since_epoch = (today - epoch).days
-    week_number = (days_since_epoch // 7) + 11659
-    return week_number
+    return ((today - epoch).days // 7) + 11659
 
 
-def get_group_info(search_string):
-    url = "https://it-institut.ru/SearchString/KeySearch"
-    params = {
-        "Id": 37,
-        "SearchProductName": search_string
-    }
+def internet_available() -> bool:
+    """Fast internet availability check (Google 204 endpoint)."""
+    inc("internet_checks_total")
     try:
-        response = requests.get(url, params=params, timeout=10)
-        response.raise_for_status()
-        data = response.json()
-        if not data:
-            return None, None
-        for result in data:
-            if result.get('SearchContent', '').lower() == search_string.lower():
-                return {
-                    "SearchId": result.get('SearchId'),
-                    "SearchString": result.get('SearchContent'),
-                    "OwnerId": result.get('OwnerId'),
-                    "Type": result.get('Type')
-                }, None
-        first_result = data[0]
-        return {
-            "SearchId": first_result.get('SearchId'),
-            "SearchString": first_result.get('SearchContent'),
-            "OwnerId": first_result.get('OwnerId'),
-            "Type": first_result.get('Type')
-        }, first_result.get('SearchContent')
-    except (requests.exceptions.RequestException, ValueError) as e:
-        print(f"Ошибка при поиске: {e}")
+        http_client.get_text(
+            settings.internet_check_url,
+            timeout=(
+                settings.internet_check_timeout_seconds,
+                settings.internet_check_timeout_seconds,
+            ),
+        )
+        inc("internet_online")
+        return True
+    except ScheduleFetchError:
+        inc("internet_offline")
+        return False
+
+
+def get_cached_entity_info(search_string: str) -> dict[str, object] | None:
+    """Find matching entity info by normalized search string in local cache."""
+    normalized = normalize_search_string(search_string).lower()
+    if not normalized:
+        return None
+
+    cache_data = read_cache_data()
+    entries = cache_data.get("entries", {})
+    if not isinstance(entries, dict):
+        return None
+
+    for entry in entries.values():
+        if not isinstance(entry, dict):
+            continue
+        entity_info = entry.get("entity_info")
+        if not isinstance(entity_info, dict):
+            continue
+        entity_name = normalize_search_string(str(entity_info.get("SearchString", ""))).lower()
+        if entity_name == normalized and validate_entity_info(entity_info):
+            return entity_info
+    return None
+
+
+def _map_entity_result(result: dict[str, Any]) -> dict[str, object]:
+    return {
+        "SearchId": result.get("SearchId"),
+        "SearchString": result.get("SearchContent"),
+        "OwnerId": result.get("OwnerId"),
+        "Type": result.get("Type"),
+    }
+
+
+def get_group_info(search_string: str) -> tuple[dict[str, object] | None, str | None]:
+    """Resolve search string into source entity metadata."""
+    search_string = normalize_search_string(search_string)
+    params = {"Id": 37, "SearchProductName": search_string}
+
+    try:
+        data = http_client.get_json(settings.search_url, params=params)
+    except ScheduleFetchError as error:
+        logger.warning("group_search_failed error=%s", error)
         return None, None
 
-def get_schedule(week_id, entity_info):
-    if not entity_info:
-        return {}, [], None, None
+    if not isinstance(data, list) or not data:
+        return None, None
 
-    search_id = entity_info['SearchId']
-    search_string = entity_info['SearchString'].replace(' ', '%20')
-    owner_id = entity_info['OwnerId']
-    entity_type = entity_info['Type']
-
-    url = f"https://it-institut.ru/Raspisanie/SearchedRaspisanie?SearchId={search_id}&SearchString={search_string}&Type={entity_type}&OwnerId={owner_id}&WeekId={week_id}"
-    try:
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
-    except requests.exceptions.RequestException as e:
-        print(f"Ошибка при загрузке расписания: {e}")
-        return {}, [], None, None
-
-    response.encoding = "utf-8"
-    soup = BeautifulSoup(response.text, "html.parser")
-
-    time_headers = []
-    header_rows = soup.select("thead tr")
-    if not header_rows:
-        return {}, [], None, None
-    header_row = header_rows[0]
-    for th in header_row.find_all("th")[1:]:
-        colspan = int(th.get('colspan', 1))
-        time_text = th.get_text(strip=True)
-        for _ in range(colspan):
-            time_headers.append(time_text)
-
-    schedule = {}
-    days_list = []
-
-    def split_time_interval(time_range, num_parts):
-        if not time_range or '-' not in time_range:
-            return [time_range] * num_parts
-        try:
-            start_time, end_time = time_range.split('-')
-            start_minutes = time_to_minutes(start_time.strip())
-            end_minutes = time_to_minutes(end_time.strip())
-            total_minutes = end_minutes - start_minutes
-            part_minutes = total_minutes // num_parts
-            time_intervals = []
-            for i in range(num_parts):
-                part_start = start_minutes + i * part_minutes
-                part_end = part_start + part_minutes
-                time_intervals.append(f"{minutes_to_time(part_start)}-{minutes_to_time(part_end)}")
-            return time_intervals
-        except (ValueError, TypeError):
-            return [time_range] * num_parts
-
-    def time_to_minutes(time_str):
-        try:
-            hours, minutes = map(int, time_str.split(':'))
-            return hours * 60 + minutes
-        except (ValueError, TypeError):
-            return 0
-
-    def minutes_to_time(minutes):
-        hours = minutes // 60
-        mins = minutes % 60
-        return f"{hours:02d}:{mins:02d}"
-
-    # Находим индекс последнего урока с занятиями для каждого дня
-    for row in soup.select("tbody tr"):
-        day_cell = row.find("th")
-        if not day_cell:
+    for result in data:
+        if not isinstance(result, dict):
             continue
+        content = normalize_search_string(str(result.get("SearchContent", ""))).lower()
+        if content == search_string.lower():
+            entity = _map_entity_result(result)
+            return (entity, None) if validate_entity_info(entity) else (None, None)
 
-        day_text = day_cell.get_text(" ", strip=True)
-        days_list.append(day_text)
-        lessons_for_day = []
-        time_index = 0
+    first_result = data[0] if isinstance(data[0], dict) else {}
+    entity = _map_entity_result(first_result)
+    corrected = first_result.get("SearchContent") if isinstance(first_result, dict) else None
+    return (entity, corrected) if validate_entity_info(entity) else (None, None)
 
-        # Сначала собираем все ячейки дня
-        all_cells = []
-        for td in row.find_all("td"):
-            colspan = int(td.get('colspan', 1))
-            current_time_range = time_headers[time_index] if time_index < len(time_headers) else None
 
-            lesson_divs = td.find_all("div")
-            if lesson_divs:
-                time_intervals = split_time_interval(current_time_range, len(lesson_divs))
-                lessons_in_cell = []
-                for i, div in enumerate(lesson_divs):
-                    spans = [s.get_text(strip=True) for s in div.find_all("span")]
-                    teacher_room_full = spans[1] if len(spans) > 1 else None
-                    teacher = None
-                    room = None
+def _meta(
+    source_name: str,
+    cache_updated_at: str | None,
+    message: str,
+    warning: str | None = None,
+    error_type: str | None = None,
+) -> CacheMeta:
+    return {
+        "source": source_name,  # type: ignore[typeddict-item]
+        "cache_updated_at": cache_updated_at,
+        "message": message,
+        "warning": warning,
+        "error_type": error_type,
+    }
 
-                    if teacher_room_full:
-                        parts = [p.strip() for p in teacher_room_full.split(',') if p.strip()]
-                        if len(parts) == 1:
-                            teacher = parts[0]
-                        elif len(parts) >= 2:
-                            teacher = parts[0]
-                            # объединяем все остальные части в room (чтобы захватывать "101А, Лаборатория физики")
-                            room = ', '.join(parts[1:])
 
-                    lesson_time = time_intervals[i] if i < len(time_intervals) else current_time_range
-                    lesson = {
-                        "time": lesson_time,
-                        "subject": spans[0] if len(spans) > 0 else None,
-                        "teacher": teacher,
-                        "room": room,
-                        "group": spans[2] if len(spans) > 2 else None
-                    }
-                    lessons_in_cell.append(lesson)
+def fetch_network_schedule(week_id: int, entity_info: dict[str, object]):
+    """Fetch schedule from remote source and update local cache."""
+    inc("requests_total")
+    if not validate_entity_info(entity_info):
+        return (
+            {},
+            [],
+            None,
+            None,
+            _meta("none", None, "Некорректные параметры группы.", error_type="validation"),
+        )
 
-                all_cells.append({
-                    "colspan": colspan,
-                    "lessons": lessons_in_cell,
-                    "time_range": current_time_range
-                })
-            else:
-                # Пустая ячейка (нет пар)
-                all_cells.append({
-                    "colspan": colspan,
-                    "lessons": [],
-                    "time_range": current_time_range
-                })
+    cache_key = build_cache_key(entity_info["SearchId"], week_id)
+    started = perf_counter()
 
-            time_index += colspan
+    try:
+        html = source.fetch_html(week_id, entity_info)
+        parsed = source.parse(html)
+        schedule = parsed["schedule"]
+        days_list = parsed["days_list"]
+        prev_week_id = parsed["prev_week_id"]
+        next_week_id = parsed["next_week_id"]
+        upsert_schedule_cache(
+            cache_key,
+            {
+                "entity_info": entity_info,
+                "week_id": week_id,
+                "schedule": schedule,
+                "days_list": days_list,
+                "prev_week_id": prev_week_id,
+                "next_week_id": next_week_id,
+            },
+        )
+        latency_ms = round((perf_counter() - started) * 1000, 2)
+        inc("network_fetch_success")
+        set_value("last_network_latency_ms", latency_ms)
+        mark_source("network")
+        logger.info(
+            "network_schedule_success group=%s week=%s latency_ms=%s",
+            entity_info["SearchString"],
+            week_id,
+            latency_ms,
+        )
+        return (
+            schedule,
+            days_list,
+            prev_week_id,
+            next_week_id,
+            _meta(
+                "network",
+                datetime.now().isoformat(timespec="seconds"),
+                "Актуальные данные загружены из интернета.",
+            ),
+        )
+    except (ScheduleFetchError, ScheduleSchemaChangedError, ScheduleParseError) as error:
+        inc("network_fetch_error")
+        set_value("last_network_latency_ms", round((perf_counter() - started) * 1000, 2))
+        logger.warning(
+            "network_schedule_failed group=%s week=%s error=%s",
+            entity_info.get("SearchString"),
+            week_id,
+            error,
+        )
+        raise
+    except Exception as error:  # noqa: BLE001
+        inc("network_fetch_error")
+        logger.exception("unexpected_schedule_failure")
+        raise ScheduleError("Unexpected schedule loading failure") from error
 
-        # Находим индекс последней ячейки с занятиями
-        last_lesson_index = -1
-        for i, cell in enumerate(all_cells):
-            if cell["lessons"]:  # Если в ячейке есть занятия
-                last_lesson_index = i
 
-        # Формируем расписание только до последней ячейки с занятиями
-        for i, cell in enumerate(all_cells):
-            if i > last_lesson_index and last_lesson_index != -1:
-                break  # Прекращаем после последней ячейки с занятиями
+def get_schedule(week_id: int, entity_info: dict[str, object], prefer_cache: bool = True):
+    """Get schedule with cache-first strategy and safe fallbacks."""
+    if not validate_entity_info(entity_info):
+        return (
+            {},
+            [],
+            None,
+            None,
+            _meta("none", None, "Данные для загрузки не указаны.", error_type="validation"),
+        )
 
-            if cell["lessons"]:
-                lessons_for_day.append(cell["lessons"])
-            else:
-                # Добавляем пустой урок
-                lessons_for_day.append([{
-                    "time": cell["time_range"],
-                    "subject": None,
-                    "teacher": None,
-                    "room": None,
-                    "group": None
-                }])
+    cache_key = build_cache_key(entity_info["SearchId"], week_id)
+    cache_entry = get_schedule_cache(cache_key)
 
-        if lessons_for_day:
-            schedule[day_text] = lessons_for_day
+    if prefer_cache and cache_entry:
+        inc("cache_hits")
+        mark_source("cache")
+        return (
+            cache_entry.get("schedule", {}),
+            cache_entry.get("days_list", []),
+            cache_entry.get("prev_week_id"),
+            cache_entry.get("next_week_id"),
+            _meta(
+                "cache",
+                (
+                    cache_entry.get("updated_at")
+                    if isinstance(cache_entry.get("updated_at"), str)
+                    else None
+                ),
+                "Показана сохранённая локальная версия.",
+            ),
+        )
 
-    # ... остальной код для prev_week_id и next_week_id ...
+    try:
+        return fetch_network_schedule(week_id, entity_info)
+    except (ScheduleFetchError, ScheduleParseError, ScheduleSchemaChangedError) as error:
+        if cache_entry:
+            mark_source("cache")
+            return (
+                cache_entry.get("schedule", {}),
+                cache_entry.get("days_list", []),
+                cache_entry.get("prev_week_id"),
+                cache_entry.get("next_week_id"),
+                _meta(
+                    "cache",
+                    (
+                        cache_entry.get("updated_at")
+                        if isinstance(cache_entry.get("updated_at"), str)
+                        else None
+                    ),
+                    "Показана сохранённая локальная версия.",
+                    warning="Source unavailable or structure changed. Showing cached data.",
+                    error_type=error.__class__.__name__,
+                ),
+            )
+        return (
+            {},
+            [],
+            None,
+            None,
+            _meta(
+                "none",
+                None,
+                "Не удалось получить расписание и кэш отсутствует.",
+                warning="Source unavailable or structure changed. Showing cached data.",
+                error_type=error.__class__.__name__,
+            ),
+        )
 
-    prev_week_id = None
-    next_week_id = None
-    current_week_link = soup.find('a', class_='btn-primary')
-    if current_week_link:
-        prev_link = current_week_link.find_previous_sibling('a')
-        if prev_link and 'href' in prev_link.attrs:
-            match = re.search(r'WeekId=(\d+)', prev_link['href'])
-            if match:
-                prev_week_id = int(match.group(1))
 
-        next_link = current_week_link.find_next_sibling('a')
-        if next_link and 'href' in next_link.attrs:
-            match = re.search(r'WeekId=(\d+)', next_link['href'])
-            if match:
-                next_week_id = int(match.group(1))
-
-    return schedule, days_list, prev_week_id, next_week_id
+def cache_state_for(entity_info: dict[str, object] | None, week_id: int) -> str:
+    if not entity_info or not validate_entity_info(entity_info):
+        return "unknown"
+    cache_key = build_cache_key(entity_info["SearchId"], week_id)
+    return "hot" if get_schedule_cache(cache_key) else "empty"
