@@ -1,9 +1,17 @@
-{% extends "base.html" %} {% block header %}
-<h4 class="m-0">📅 Расписание</h4>
-{% endblock %} {% block content %}
-<div class="card shadow-sm">
+{% extends "base.html" %}
+{% block header %}
+<h4 class="m-0">📅 Расписание APKLife</h4>
+<p class="subtitle mb-0">Работает на телефоне, планшете и ПК</p>
+{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm search-card">
 	<div class="card-body">
-		<h5 class="card-title">Введите название</h5>
+		<h5 class="card-title">Введите группу, преподавателя или аудиторию</h5>
+		<p class="text-muted small mb-3">
+			Данные автоматически кэшируются локально: если сайт недоступен дольше 15 секунд,
+			приложение покажет последнее сохранённое расписание.
+		</p>
 		<form id="searchForm" method="get" action="/group/">
 			<div class="mb-3 position-relative">
 				<input
@@ -14,25 +22,11 @@
 					placeholder="11 нмо, Климова Т.С., актовый зал"
 					autocomplete="on"
 				/>
-				<div
-					id="suggestions-container"
-					class="list-group position-absolute w-100"
-					style="display: none; z-index: 1000"
-				></div>
-				<input
-					type="hidden"
-					name="week_id"
-					value="{{ current_week }}"
-				/>
-				<input
-					type="hidden"
-					name="day"
-					value="{{ current_day_name }}"
-				/>
+				<div id="suggestions-container" class="list-group position-absolute w-100"></div>
+				<input type="hidden" name="week_id" value="{{ current_week }}" />
+				<input type="hidden" name="day" value="{{ current_day_name }}" />
 			</div>
-			<button type="submit" class="btn btn-primary w-100">
-				Найти расписание
-			</button>
+			<button type="submit" class="btn btn-primary w-100">Найти расписание</button>
 		</form>
 	</div>
 </div>
