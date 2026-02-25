@@ -2,9 +2,7 @@
 <html lang="ru">
 	<head>
 		<meta charset="UTF-8" />
-
 		<title>{% block title %}Расписание{% endblock %}</title>
-
 		<meta
 			name="viewport"
 			content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
@@ -27,145 +25,93 @@
 		<header>{% block header %}{% endblock %}</header>
 
 		<div class="container my-3 pb-5">
-			{% include "errors/error.html" %} {% block content
-			%}{% endblock %}
+			{% include "errors/error.html" %}
+			{% block content %}{% endblock %}
 		</div>
 
 		<div id="modalInfo" class="cn-modal">
 			<div class="cn-modal-content">
-				<h5 class="card-title">Информация</h5>
+				<h5 class="card-title">О приложении APKLife</h5>
 
-				<div style="margin: 15px 0">
-					<b>APKLife</b> — это проект для студентов и
-					преподавателей АПК Альметьевск, позволяющий
-					удобно просматривать актуальное расписание
-					занятий с любого устройства: смартфона,
-					планшета или компьютера.
+				<div class="info-text">
+					APKLife помогает студентам и преподавателям быстро смотреть актуальное расписание
+					с телефона, планшета и ПК. При проблемах с интернетом приложение автоматически
+					попытается открыть локально сохранённую версию расписания.
 				</div>
 
-				<div style="margin: 0 0 15px 0">
-					<b>
-						<a href="https://it-institut.ru"
-							>Поставщик расписания</a
-						></b
-					>
-					|
-					<b
-						><a
-							href="https://github.com/drakkoshkka/APKLife"
-							>GitHub</a
-						></b
-					>
+				<div class="info-text">
+					<strong>Технологии:</strong>
+					<ul class="tech-list">
+						<li>Flask + Python (сервер и парсинг данных)</li>
+						<li>HTML5, CSS3, Bootstrap 5, Bootstrap Icons</li>
+						<li>JavaScript (тёмная тема, подсказки, localStorage)</li>
+						<li>Локальный кэш расписания (offline fallback)</li>
+					</ul>
 				</div>
 
-				<button
-					class="btn btn-primary w-100"
-					id="closeModalInfo"
-				>
-					Закрыть
-				</button>
+				{% if version_status %}
+				<div class="version-box">
+					<div><strong>Локальная версия:</strong> {{ version_status.local_commit }}</div>
+					<div><strong>GitHub:</strong> {{ version_status.remote_commit }}</div>
+					<div><strong>Проверено:</strong> {{ version_status.checked_at }}</div>
+					<div>
+						<strong>Статус:</strong>
+						{% if version_status.status == 'up-to-date' %}
+						<span class="badge text-bg-success">Актуально</span>
+						{% elif version_status.status == 'update-available' %}
+						<span class="badge text-bg-warning">Есть обновление</span>
+						{% else %}
+						<span class="badge text-bg-secondary">Оффлайн</span>
+						{% endif %}
+					</div>
+				</div>
+				{% endif %}
+
+				<div class="info-links">
+					<a href="https://it-institut.ru">Поставщик расписания</a>
+					<a href="https://github.com/drakkoshkka/APKLife">GitHub</a>
+				</div>
+
+				<button class="btn btn-primary w-100" id="closeModalInfo">Закрыть</button>
 			</div>
 		</div>
 
 		<div id="modalSettings" class="cn-modal">
 			<div class="cn-modal-content">
-				<h5
-					class="card-title"
-					style="padding-bottom: 15px"
-				>
-					Настройки
-				</h5>
-
+				<h5 class="card-title settings-title">Настройки</h5>
 				<div class="modal-body">
 					<div class="form-check form-switch mb-3">
-						<input
-							class="form-check-input"
-							type="checkbox"
-							id="darkModeSwitch"
-						/>
-						<label
-							class="form-check-label"
-							for="darkModeSwitch"
-							style="padding: 4px"
-							>Тёмная тема</label
-						>
+						<input class="form-check-input" type="checkbox" id="darkModeSwitch" />
+						<label class="form-check-label" for="darkModeSwitch">Тёмная тема</label>
 					</div>
 				</div>
-
-				<button
-					class="btn btn-primary w-100"
-					id="closeModalSettings"
-				>
-					Закрыть
-				</button>
+				<button class="btn btn-primary w-100" id="closeModalSettings">Закрыть</button>
 			</div>
 		</div>
 
-		<footer
-			class="fixed-bottom navbar navbar-expand-lg navbar-light bg-light border-top"
-		>
+		<footer class="fixed-bottom navbar navbar-expand-lg navbar-light bg-light border-top">
 			<div class="container d-flex justify-content-around">
 				{% if group_info %}
-				<a
-					class="nav-link text-center px-1 py-0"
-					href="/"
-				>
+				<a class="nav-link text-center px-1 py-0" href="/">
 					<i class="bi bi-x-circle d-block fs-5"></i>
-					<span
-						class="d-block"
-						style="font-size: 0.75em"
-						>Сбросить</span
-					>
+					<span class="d-block footer-action-label">Сбросить</span>
 				</a>
 				{% endif %}
 
-				<a
-					class="nav-link text-center px-1 py-0"
-					href="#"
-					id="openModalSettings"
-				>
+				<a class="nav-link text-center px-1 py-0" href="#" id="openModalSettings">
 					<i class="bi bi-gear-fill d-block fs-5"></i>
-					<span
-						class="d-block"
-						style="font-size: 0.75em"
-						>Настройки</span
-					>
+					<span class="d-block footer-action-label">Настройки</span>
 				</a>
 
-				{% if request.path != '/info/' %}
-				<a
-					class="nav-link text-center px-1 py-0"
-					href="#"
-					id="openModalInfo"
-				>
-					<i
-						class="bi bi-info-circle d-block fs-5"
-					></i>
-					<span
-						class="d-block"
-						style="font-size: 0.75em"
-						>Инфо</span
-					>
+				<a class="nav-link text-center px-1 py-0" href="#" id="openModalInfo">
+					<i class="bi bi-info-circle d-block fs-5"></i>
+					<span class="d-block footer-action-label">Инфо</span>
 				</a>
-				{% else %}
-				<a
-					class="nav-link text-center px-1 py-0"
-					href="/"
-				>
-					<i class="bi bi-x-circle d-block fs-5"></i>
-					<span
-						class="d-block"
-						style="font-size: 0.75em"
-						>Назад</span
-					>
-				</a>
-				{% endif %}
 			</div>
 		</footer>
 
 		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 		<script src="{{ url_for('static', filename='scripts.js') }}"></script>
-
 		{% block scripts %}{% endblock %}
 	</body>
 </html>

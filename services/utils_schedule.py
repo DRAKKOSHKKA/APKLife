@@ -1,7 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
 import re
-import json
 from datetime import datetime
 
 def get_current_day_name():
@@ -64,7 +63,7 @@ def get_group_info(search_string):
         print(f"Ошибка при поиске: {e}")
         return None, None
 
-def get_schedule(week_id, entity_info):
+def get_schedule(week_id, entity_info, timeout=30):
     if not entity_info:
         return {}, [], None, None
 
@@ -75,7 +74,7 @@ def get_schedule(week_id, entity_info):
 
     url = f"https://it-institut.ru/Raspisanie/SearchedRaspisanie?SearchId={search_id}&SearchString={search_string}&Type={entity_type}&OwnerId={owner_id}&WeekId={week_id}"
     try:
-        response = requests.get(url, timeout=10)
+        response = requests.get(url, timeout=timeout)
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
         print(f"Ошибка при загрузке расписания: {e}")

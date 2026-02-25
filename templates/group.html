@@ -29,8 +29,22 @@
 	</a>
 	{% endfor %}
 </div>
-{% endblock %} {% block content %} {% for day, lessons in
-schedule.items() %}
+{% endblock %} {% block content %}
+{% if data_source == "cache" %}
+<div class="alert alert-warning cache-alert" role="alert">
+	<i class="bi bi-wifi-off"></i>
+	Показана локальная копия расписания.
+	{% if last_updated_at %}<strong>Последнее обновление:</strong> {{ last_updated_at }}.{% endif %}
+</div>
+{% elif data_source == "online" and last_updated_at %}
+<div class="alert alert-success cache-alert" role="alert">
+	<i class="bi bi-cloud-check"></i>
+	Данные загружены с сервера.
+	<strong>Обновлено:</strong> {{ last_updated_at }}.
+</div>
+{% endif %}
+{% for day, lessons in schedule.items() %}
+
 <div class="card mb-3 shadow-sm">
 	<div class="card-header bg-light">
 		<h5 class="card-title mb-0">{{ day }}</h5>
@@ -41,8 +55,7 @@ schedule.items() %}
 		<ul class="list-group list-group-flush">
 			{% for lesson_list in lessons %}
 			<li
-				class="list-group-item"
-				style="background: transparent; border: none"
+				class="list-group-item lesson-item"
 			>
 				{% if lesson_list %} {% for lesson in lesson_list
 				%}
