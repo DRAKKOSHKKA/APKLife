@@ -2,170 +2,86 @@
 <html lang="ru">
 	<head>
 		<meta charset="UTF-8" />
-
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+		<meta name="theme-color" content="#6750A4" />
+		<link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}" />
 		<title>{% block title %}Расписание{% endblock %}</title>
-
-		<meta
-			name="viewport"
-			content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-		/>
-
-		<link
-			href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-			rel="stylesheet"
-		/>
-		<link
-			href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css"
-			rel="stylesheet"
-		/>
-		<link
-			rel="stylesheet"
-			href="{{ url_for('static', filename='style.css') }}"
-		/>
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
+		<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
 	</head>
 	<body>
 		<header>{% block header %}{% endblock %}</header>
 
-		<div class="container my-3 pb-5">
-			{% include "errors/error.html" %} {% block content
-			%}{% endblock %}
-		</div>
+		<main class="container my-3 pb-5">
+			<div id="offline-indicator" class="alert alert-warning offline-indicator d-none" role="status">
+				<i class="bi bi-wifi-off"></i> Нет сети. Показаны локальные данные.
+			</div>
+			{% include "errors/error.html" %}
+			{% block content %}{% endblock %}
+		</main>
 
-		<div id="modalInfo" class="cn-modal">
+		<div id="modalInfo" class="cn-modal" role="dialog" aria-modal="true" aria-labelledby="modalInfoTitle">
 			<div class="cn-modal-content">
-				<h5 class="card-title">Информация</h5>
-
-				<div style="margin: 15px 0">
-					<b>APKLife</b> — это проект для студентов и
-					преподавателей АПК Альметьевск, позволяющий
-					удобно просматривать актуальное расписание
-					занятий с любого устройства: смартфона,
-					планшета или компьютера.
+				<h5 id="modalInfoTitle" class="card-title">О проекте</h5>
+				<div class="info-text"><b>APKLife</b> — локальное веб-приложение с офлайн-кэшем для студентов.</div>
+				<div class="info-text"><b>Технологии:</b> Flask, Requests, BeautifulSoup, Bootstrap 5, PWA, JSON-кэш, GitHub API.</div>
+				<div class="info-text">
+					<b><a href="https://it-institut.ru" target="_blank" rel="noopener noreferrer">Источник расписания</a></b> |
+					<b><a href="https://github.com/drakkoshkka/APKLife" target="_blank" rel="noopener noreferrer">GitHub</a></b>
 				</div>
-
-				<div style="margin: 0 0 15px 0">
-					<b>
-						<a href="https://it-institut.ru"
-							>Поставщик расписания</a
-						></b
-					>
-					|
-					<b
-						><a
-							href="https://github.com/drakkoshkka/APKLife"
-							>GitHub</a
-						></b
-					>
-				</div>
-
-				<button
-					class="btn btn-primary w-100"
-					id="closeModalInfo"
-				>
-					Закрыть
-				</button>
+				<div id="dev-tap-target" class="dev-tap-target">APKLife v students-first</div>
+				<button class="btn btn-primary w-100" id="closeModalInfo">Закрыть</button>
 			</div>
 		</div>
 
-		<div id="modalSettings" class="cn-modal">
+		<div id="modalSettings" class="cn-modal" role="dialog" aria-modal="true" aria-labelledby="modalSettingsTitle">
 			<div class="cn-modal-content">
-				<h5
-					class="card-title"
-					style="padding-bottom: 15px"
-				>
-					Настройки
-				</h5>
-
+				<h5 id="modalSettingsTitle" class="card-title settings-title">Настройки</h5>
 				<div class="modal-body">
 					<div class="form-check form-switch mb-3">
-						<input
-							class="form-check-input"
-							type="checkbox"
-							id="darkModeSwitch"
-						/>
-						<label
-							class="form-check-label"
-							for="darkModeSwitch"
-							style="padding: 4px"
-							>Тёмная тема</label
-						>
+						<input class="form-check-input" type="checkbox" id="darkModeSwitch" />
+						<label class="form-check-label" for="darkModeSwitch">Тёмная тема</label>
+					</div>
+					<div id="dev-mode-toggle-wrap" class="form-check form-switch mb-3 d-none">
+						<input class="form-check-input" type="checkbox" id="devModeSwitch" />
+						<label class="form-check-label" for="devModeSwitch">DEV режим</label>
+					</div>
+					{% if group_info %}
+					<div class="d-grid gap-2 mb-2">
+						<a class="btn btn-outline-primary" href="/group/?group_name={{ group_info.SearchString|urlencode }}{% if week_id is not none %}&week_id={{ week_id }}{% endif %}{% if active_day %}&day={{ active_day.split(' ')[0] }}{% endif %}&force_refresh=1">
+							<i class="bi bi-arrow-clockwise"></i> Обновить расписание
+						</a>
+						<a class="btn btn-outline-danger" href="/"><i class="bi bi-x-circle"></i> Сбросить выбранную группу</a>
+					</div>
+					{% endif %}
+					<div id="dev-panel" class="dev-panel d-none">
+						<h6>DEV панель</h6>
+						<pre id="dev-status" class="dev-status">loading...</pre>
+						<button id="loadLogsBtn" class="btn btn-sm btn-outline-secondary w-100 mb-2">Загрузить логи</button>
+						<pre id="dev-logs" class="dev-status">logs hidden</pre>
 					</div>
 				</div>
-
-				<button
-					class="btn btn-primary w-100"
-					id="closeModalSettings"
-				>
-					Закрыть
-				</button>
+				<button class="btn btn-primary w-100" id="closeModalSettings">Закрыть</button>
 			</div>
 		</div>
 
-		<footer
-			class="fixed-bottom navbar navbar-expand-lg navbar-light bg-light border-top"
-		>
+		<footer class="fixed-bottom navbar navbar-expand-lg navbar-light bg-light border-top app-footer">
 			<div class="container d-flex justify-content-around">
-				{% if group_info %}
-				<a
-					class="nav-link text-center px-1 py-0"
-					href="/"
-				>
-					<i class="bi bi-x-circle d-block fs-5"></i>
-					<span
-						class="d-block"
-						style="font-size: 0.75em"
-						>Сбросить</span
-					>
-				</a>
-				{% endif %}
-
-				<a
-					class="nav-link text-center px-1 py-0"
-					href="#"
-					id="openModalSettings"
-				>
-					<i class="bi bi-gear-fill d-block fs-5"></i>
-					<span
-						class="d-block"
-						style="font-size: 0.75em"
-						>Настройки</span
-					>
-				</a>
-
-				{% if request.path != '/info/' %}
-				<a
-					class="nav-link text-center px-1 py-0"
-					href="#"
-					id="openModalInfo"
-				>
-					<i
-						class="bi bi-info-circle d-block fs-5"
-					></i>
-					<span
-						class="d-block"
-						style="font-size: 0.75em"
-						>Инфо</span
-					>
-				</a>
-				{% else %}
-				<a
-					class="nav-link text-center px-1 py-0"
-					href="/"
-				>
-					<i class="bi bi-x-circle d-block fs-5"></i>
-					<span
-						class="d-block"
-						style="font-size: 0.75em"
-						>Назад</span
-					>
-				</a>
-				{% endif %}
+				<a class="nav-link text-center px-1 py-0" href="#" id="openModalSettings"><i class="bi bi-gear-fill d-block fs-5"></i><span class="d-block footer-action-label">Настройки</span></a>
+				<a class="nav-link text-center px-1 py-0" href="#" id="openModalInfo"><i class="bi bi-info-circle d-block fs-5"></i><span class="d-block footer-action-label">Инфо</span></a>
 			</div>
 		</footer>
 
+		<script>
+			window.__SERVER_STATE__ = {
+				offline: {{ 'true' if offline else 'false' }},
+				cacheState: "{{ cache_state }}",
+				metrics: {{ metrics|tojson }}
+			};
+		</script>
 		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 		<script src="{{ url_for('static', filename='scripts.js') }}"></script>
-
 		{% block scripts %}{% endblock %}
 	</body>
 </html>
