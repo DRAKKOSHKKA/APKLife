@@ -1,20 +1,21 @@
 """Flask application entrypoint with global context and error handlers."""
 
-import traceback
+from __future__ import annotations
 
 from flask import Flask, render_template
 from werkzeug.exceptions import HTTPException
 
 from routes.group import bp_group
 from routes.main import bp_main
+from services.config import settings
 from services.logger import setup_logger
 from services.metrics import snapshot
 from services.version import get_version_status
 
-logger = setup_logger("app")
+logger = setup_logger(__name__)
 
 
-def create_app():
+def create_app() -> Flask:
     """Build Flask app instance and register routes/middleware."""
     app = Flask(__name__)
 
@@ -34,8 +35,7 @@ def create_app():
     @app.errorhandler(Exception)
     def handle_exception(error):
         """Render user-friendly error pages for both HTTP and unexpected errors."""
-        logger.error("Unhandled exception: %s", error)
-        traceback.print_exc()
+        logger.exception("Unhandled exception: %s", error)
 
         if isinstance(error, HTTPException):
             return (
@@ -63,4 +63,4 @@ def create_app():
 
 if __name__ == "__main__":
     app = create_app()
-    app.run(host="0.0.0.0", debug=True)
+    app.run(host=settings.host, port=settings.port, debug=settings.debug)

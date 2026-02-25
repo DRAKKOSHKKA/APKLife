@@ -1,9 +1,10 @@
 """Main schedule integration service with cache-first and network-refresh strategies."""
 
+from __future__ import annotations
+
 from datetime import datetime
 from time import perf_counter
-
-import requests
+from typing import Any
 
 from services.cache_store import (
     build_cache_key,
@@ -11,22 +12,25 @@ from services.cache_store import (
     read_cache_data,
     upsert_schedule_cache,
 )
-from services.constants import (
-    INTERNET_CHECK_TIMEOUT_SECONDS,
-    INTERNET_CHECK_URL,
-    REQUEST_TIMEOUT_SECONDS,
-    SCHEDULE_URL_TEMPLATE,
-    SEARCH_URL,
+from services.config import settings
+from services.exceptions import (
+    ScheduleError,
+    ScheduleFetchError,
+    ScheduleParseError,
+    ScheduleSchemaChangedError,
 )
+from services.http_client import http_client
 from services.logger import setup_logger
 from services.metrics import inc, mark_source, set_value
-from services.schedule_parser import parse_schedule_html
+from services.sources.html_source import InstituteHtmlScheduleSource
+from services.types import CacheMeta
 from services.validators import normalize_search_string, validate_entity_info
 
 logger = setup_logger("schedule")
+source = InstituteHtmlScheduleSource()
 
 
-def get_current_day_name():
+def get_current_day_name() -> str:
     """Return current day name in Russian."""
     days_ru = {
         "Monday": "Понедельник",
@@ -40,46 +44,55 @@ def get_current_day_name():
     return days_ru[datetime.now().strftime("%A")]
 
 
-def get_current_week():
+def get_current_week() -> int:
     """Return current week id according to source platform formula."""
     today = datetime.now()
     epoch = datetime(1970, 1, 1)
-    days_since_epoch = (today - epoch).days
-    return (days_since_epoch // 7) + 11659
+    return ((today - epoch).days // 7) + 11659
 
 
-def internet_available():
+def internet_available() -> bool:
     """Fast internet availability check (Google 204 endpoint)."""
     inc("internet_checks_total")
     try:
-        response = requests.get(INTERNET_CHECK_URL, timeout=INTERNET_CHECK_TIMEOUT_SECONDS)
-        is_online = response.status_code in (200, 204)
-        inc("internet_online" if is_online else "internet_offline")
-        logger.info("Internet check status=%s code=%s", is_online, response.status_code)
-        return is_online
-    except requests.RequestException as error:
+        http_client.get_text(
+            settings.internet_check_url,
+            timeout=(
+                settings.internet_check_timeout_seconds,
+                settings.internet_check_timeout_seconds,
+            ),
+        )
+        inc("internet_online")
+        return True
+    except ScheduleFetchError:
         inc("internet_offline")
-        logger.warning("Internet check failed: %s", error)
         return False
 
 
-def get_cached_entity_info(search_string):
+def get_cached_entity_info(search_string: str) -> dict[str, object] | None:
     """Find matching entity info by normalized search string in local cache."""
     normalized = normalize_search_string(search_string).lower()
     if not normalized:
         return None
 
     cache_data = read_cache_data()
-    for entry in cache_data.get("entries", {}).values():
-        entity_info = entry.get("entity_info") or {}
-        entity_name = normalize_search_string(entity_info.get("SearchString", "")).lower()
+    entries = cache_data.get("entries", {})
+    if not isinstance(entries, dict):
+        return None
+
+    for entry in entries.values():
+        if not isinstance(entry, dict):
+            continue
+        entity_info = entry.get("entity_info")
+        if not isinstance(entity_info, dict):
+            continue
+        entity_name = normalize_search_string(str(entity_info.get("SearchString", ""))).lower()
         if entity_name == normalized and validate_entity_info(entity_info):
             return entity_info
     return None
 
 
-def _map_entity_result(result):
-    """Map source search response payload to internal entity schema."""
+def _map_entity_result(result: dict[str, Any]) -> dict[str, object]:
     return {
         "SearchId": result.get("SearchId"),
         "SearchString": result.get("SearchContent"),
@@ -88,86 +101,72 @@ def _map_entity_result(result):
     }
 
 
-def get_group_info(search_string):
+def get_group_info(search_string: str) -> tuple[dict[str, object] | None, str | None]:
     """Resolve search string into source entity metadata."""
     search_string = normalize_search_string(search_string)
     params = {"Id": 37, "SearchProductName": search_string}
 
     try:
-        response = requests.get(SEARCH_URL, params=params, timeout=10)
-        response.raise_for_status()
-        data = response.json()
-    except (requests.exceptions.RequestException, ValueError) as error:
-        logger.warning("Group search failed: %s", error)
+        data = http_client.get_json(settings.search_url, params=params)
+    except ScheduleFetchError as error:
+        logger.warning("group_search_failed error=%s", error)
         return None, None
 
-    if not data:
+    if not isinstance(data, list) or not data:
         return None, None
 
     for result in data:
-        if normalize_search_string(result.get("SearchContent", "")).lower() == search_string.lower():
+        if not isinstance(result, dict):
+            continue
+        content = normalize_search_string(str(result.get("SearchContent", ""))).lower()
+        if content == search_string.lower():
             entity = _map_entity_result(result)
             return (entity, None) if validate_entity_info(entity) else (None, None)
 
-    first_result = data[0]
+    first_result = data[0] if isinstance(data[0], dict) else {}
     entity = _map_entity_result(first_result)
-    corrected = first_result.get("SearchContent")
+    corrected = first_result.get("SearchContent") if isinstance(first_result, dict) else None
     return (entity, corrected) if validate_entity_info(entity) else (None, None)
 
 
-def _build_schedule_url(week_id, entity_info):
-    """Build source schedule URL from entity/week metadata."""
-    return SCHEDULE_URL_TEMPLATE.format(
-        search_id=entity_info["SearchId"],
-        search_string=entity_info["SearchString"].replace(" ", "%20"),
-        owner_id=entity_info["OwnerId"],
-        entity_type=entity_info["Type"],
-        week_id=week_id,
-    )
-
-
-def _network_source_meta(message="Актуальные данные загружены из интернета."):
+def _meta(
+    source_name: str,
+    cache_updated_at: str | None,
+    message: str,
+    warning: str | None = None,
+    error_type: str | None = None,
+) -> CacheMeta:
     return {
-        "source": "network",
-        "cache_updated_at": datetime.now().isoformat(timespec="seconds"),
+        "source": source_name,  # type: ignore[typeddict-item]
+        "cache_updated_at": cache_updated_at,
         "message": message,
+        "warning": warning,
+        "error_type": error_type,
     }
 
 
-def _cache_source_meta(updated_at):
-    return {
-        "source": "cache",
-        "cache_updated_at": updated_at,
-        "message": "Показана сохранённая локальная версия. Выполняется фоновая проверка обновления.",
-    }
-
-
-def _empty_source_meta():
-    return {
-        "source": "none",
-        "cache_updated_at": None,
-        "message": "Не удалось загрузить расписание из интернета и локальный кэш отсутствует.",
-    }
-
-
-def fetch_network_schedule(week_id, entity_info):
+def fetch_network_schedule(week_id: int, entity_info: dict[str, object]):
     """Fetch schedule from remote source and update local cache."""
     inc("requests_total")
     if not validate_entity_info(entity_info):
-        return {}, [], None, None, _empty_source_meta()
+        return (
+            {},
+            [],
+            None,
+            None,
+            _meta("none", None, "Некорректные параметры группы.", error_type="validation"),
+        )
 
     cache_key = build_cache_key(entity_info["SearchId"], week_id)
     started = perf_counter()
 
     try:
-        response = requests.get(
-            _build_schedule_url(week_id, entity_info),
-            timeout=REQUEST_TIMEOUT_SECONDS,
-        )
-        response.raise_for_status()
-        response.encoding = "utf-8"
-
-        schedule, days_list, prev_week_id, next_week_id = parse_schedule_html(response.text)
+        html = source.fetch_html(week_id, entity_info)
+        parsed = source.parse(html)
+        schedule = parsed["schedule"]
+        days_list = parsed["days_list"]
+        prev_week_id = parsed["prev_week_id"]
+        next_week_id = parsed["next_week_id"]
         upsert_schedule_cache(
             cache_key,
             {
@@ -184,40 +183,48 @@ def fetch_network_schedule(week_id, entity_info):
         set_value("last_network_latency_ms", latency_ms)
         mark_source("network")
         logger.info(
-            "Network schedule fetched: group=%s week=%s latency_ms=%s lessons_days=%s",
+            "network_schedule_success group=%s week=%s latency_ms=%s",
             entity_info["SearchString"],
             week_id,
             latency_ms,
-            len(schedule),
         )
-        return schedule, days_list, prev_week_id, next_week_id, _network_source_meta()
-    except requests.exceptions.RequestException as error:
+        return (
+            schedule,
+            days_list,
+            prev_week_id,
+            next_week_id,
+            _meta(
+                "network",
+                datetime.now().isoformat(timespec="seconds"),
+                "Актуальные данные загружены из интернета.",
+            ),
+        )
+    except (ScheduleFetchError, ScheduleSchemaChangedError, ScheduleParseError) as error:
         inc("network_fetch_error")
-        latency_ms = round((perf_counter() - started) * 1000, 2)
-        set_value("last_network_latency_ms", latency_ms)
+        set_value("last_network_latency_ms", round((perf_counter() - started) * 1000, 2))
         logger.warning(
-            "Schedule fetch failed: group=%s week=%s latency_ms=%s error=%s",
+            "network_schedule_failed group=%s week=%s error=%s",
             entity_info.get("SearchString"),
             week_id,
-            latency_ms,
             error,
         )
-        return {}, [], None, None, _empty_source_meta()
+        raise
+    except Exception as error:  # noqa: BLE001
+        inc("network_fetch_error")
+        logger.exception("unexpected_schedule_failure")
+        raise ScheduleError("Unexpected schedule loading failure") from error
 
 
-def get_schedule(week_id, entity_info, prefer_cache=True):
-    """Get schedule with cache-first strategy and optional network fallback.
-
-    If cache exists, return it immediately to avoid user waiting.
-    Background update can be requested separately via refresh endpoint.
-    """
-    inc("requests_total")
+def get_schedule(week_id: int, entity_info: dict[str, object], prefer_cache: bool = True):
+    """Get schedule with cache-first strategy and safe fallbacks."""
     if not validate_entity_info(entity_info):
-        return {}, [], None, None, {
-            "source": "none",
-            "cache_updated_at": None,
-            "message": "Данные для загрузки не указаны.",
-        }
+        return (
+            {},
+            [],
+            None,
+            None,
+            _meta("none", None, "Данные для загрузки не указаны.", error_type="validation"),
+        )
 
     cache_key = build_cache_key(entity_info["SearchId"], week_id)
     cache_entry = get_schedule_cache(cache_key)
@@ -225,41 +232,61 @@ def get_schedule(week_id, entity_info, prefer_cache=True):
     if prefer_cache and cache_entry:
         inc("cache_hits")
         mark_source("cache")
-        logger.info("Cache-first response for %s week %s", entity_info["SearchString"], week_id)
         return (
             cache_entry.get("schedule", {}),
             cache_entry.get("days_list", []),
             cache_entry.get("prev_week_id"),
             cache_entry.get("next_week_id"),
-            _cache_source_meta(cache_entry.get("updated_at")),
+            _meta(
+                "cache",
+                (
+                    cache_entry.get("updated_at")
+                    if isinstance(cache_entry.get("updated_at"), str)
+                    else None
+                ),
+                "Показана сохранённая локальная версия.",
+            ),
         )
 
-    if cache_entry:
-        inc("cache_hits")
-    else:
-        inc("cache_misses")
-
-    has_internet = internet_available()
-    if has_internet:
-        network_result = fetch_network_schedule(week_id, entity_info)
-        if network_result[0]:
-            return network_result
-
-    if cache_entry:
-        mark_source("cache")
-        logger.info("Fallback to cache for %s week %s", entity_info["SearchString"], week_id)
+    try:
+        return fetch_network_schedule(week_id, entity_info)
+    except (ScheduleFetchError, ScheduleParseError, ScheduleSchemaChangedError) as error:
+        if cache_entry:
+            mark_source("cache")
+            return (
+                cache_entry.get("schedule", {}),
+                cache_entry.get("days_list", []),
+                cache_entry.get("prev_week_id"),
+                cache_entry.get("next_week_id"),
+                _meta(
+                    "cache",
+                    (
+                        cache_entry.get("updated_at")
+                        if isinstance(cache_entry.get("updated_at"), str)
+                        else None
+                    ),
+                    "Показана сохранённая локальная версия.",
+                    warning="Source unavailable or structure changed. Showing cached data.",
+                    error_type=error.__class__.__name__,
+                ),
+            )
         return (
-            cache_entry.get("schedule", {}),
-            cache_entry.get("days_list", []),
-            cache_entry.get("prev_week_id"),
-            cache_entry.get("next_week_id"),
-            _cache_source_meta(cache_entry.get("updated_at")),
+            {},
+            [],
+            None,
+            None,
+            _meta(
+                "none",
+                None,
+                "Не удалось получить расписание и кэш отсутствует.",
+                warning="Source unavailable or structure changed. Showing cached data.",
+                error_type=error.__class__.__name__,
+            ),
         )
 
-    network_result = fetch_network_schedule(week_id, entity_info)
-    if network_result[0]:
-        network_result[4]["message"] = "Кэш создан из онлайн-данных."
-        return network_result
 
-    mark_source("none")
-    return {}, [], None, None, _empty_source_meta()
+def cache_state_for(entity_info: dict[str, object] | None, week_id: int) -> str:
+    if not entity_info or not validate_entity_info(entity_info):
+        return "unknown"
+    cache_key = build_cache_key(entity_info["SearchId"], week_id)
+    return "hot" if get_schedule_cache(cache_key) else "empty"

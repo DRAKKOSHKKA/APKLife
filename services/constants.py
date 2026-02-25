@@ -1,10 +1,9 @@
-"""Application constants for remote schedule integration."""
+"""Compatibility constants sourced from centralized settings."""
 
-SEARCH_URL = "https://it-institut.ru/SearchString/KeySearch"
-SCHEDULE_URL_TEMPLATE = (
-    "https://it-institut.ru/Raspisanie/SearchedRaspisanie"
-    "?SearchId={search_id}&SearchString={search_string}&Type={entity_type}&OwnerId={owner_id}&WeekId={week_id}"
-)
-INTERNET_CHECK_URL = "https://www.google.com/generate_204"
-REQUEST_TIMEOUT_SECONDS = 15
-INTERNET_CHECK_TIMEOUT_SECONDS = 3
+from services.config import settings
+
+SEARCH_URL = settings.search_url
+SCHEDULE_URL_TEMPLATE = settings.schedule_url_template
+INTERNET_CHECK_URL = settings.internet_check_url
+REQUEST_TIMEOUT_SECONDS = settings.request_timeout_seconds
+INTERNET_CHECK_TIMEOUT_SECONDS = settings.internet_check_timeout_seconds

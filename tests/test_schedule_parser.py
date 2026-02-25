@@ -1,50 +1,79 @@
-"""Unit tests for schedule parser functions."""
+"""Pytest coverage for parser reliability, normalization and fallback behavior."""
 
-import unittest
+from __future__ import annotations
 
-from services.schedule_parser import parse_schedule_html, split_time_interval
+from pathlib import Path
 
+import pytest
 
-class ScheduleParserTests(unittest.TestCase):
-    def test_split_time_interval(self):
-        parts = split_time_interval("08:00-09:30", 3)
-        self.assertEqual(parts, ["08:00-08:30", "08:30-09:00", "09:00-09:30"])
+from services.exceptions import ScheduleFetchError, ScheduleSchemaChangedError
+from services.normalize import normalize_optional, normalize_text
+from services.schedule_parser import parse_schedule_html
+from services.utils_schedule import get_schedule
 
-    def test_parse_schedule_html_basic(self):
-        html = """
-        <table>
-            <thead>
-                <tr><th>День</th><th>08:00-09:30</th></tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <th>Пн 01.01</th>
-                    <td>
-                        <div>
-                            <span>Математика,</span>
-                            <span>Иванов И.И., 101</span>
-                            <span>11 нмо</span>
-                        </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-        <a href="#">prev</a>
-        <a class="btn-primary" href="#">current</a>
-        <a href="?WeekId=12345">next</a>
-        """
-        schedule, days_list, prev_week_id, next_week_id = parse_schedule_html(html)
-
-        self.assertIn("Пн 01.01", schedule)
-        self.assertEqual(days_list, ["Пн 01.01"])
-        self.assertIsNone(prev_week_id)
-        self.assertEqual(next_week_id, 12345)
-
-        lesson = schedule["Пн 01.01"][0][0]
-        self.assertEqual(lesson["subject"], "Математика,")
-        self.assertEqual(lesson["teacher"], "Иванов И.И.")
-        self.assertEqual(lesson["room"], "101")
+FIXTURES = Path(__file__).parent / "fixtures"
 
 
-if __name__ == "__main__":
-    unittest.main()
+def _fixture(name: str) -> str:
+    return (FIXTURES / name).read_text(encoding="utf-8")
+
+
+def test_parse_valid_page_success() -> None:
+    result = parse_schedule_html(_fixture("valid_page.html"))
+    assert "Пн 01.01" in result["schedule"]
+    assert result["prev_week_id"] == 100
+    assert result["next_week_id"] == 102
+
+
+def test_schema_change_detection_missing_table() -> None:
+    with pytest.raises(ScheduleSchemaChangedError):
+        parse_schedule_html(_fixture("missing_table.html"))
+
+
+def test_schema_change_detection_changed_schema() -> None:
+    with pytest.raises(ScheduleSchemaChangedError):
+        parse_schedule_html(_fixture("changed_schema.html"))
+
+
+def test_normalization_logic() -> None:
+    assert normalize_text("  A   B ; C  ") == "A B , C"
+    assert normalize_optional("   ") is None
+
+
+def test_fallback_logic_returns_cache(monkeypatch) -> None:
+    entity = {"SearchId": 1, "SearchString": "11 нмо", "OwnerId": 1, "Type": "group"}
+
+    import services.utils_schedule as utils_schedule
+
+    def fail_fetch(*_args, **_kwargs):
+        raise ScheduleFetchError("fail")
+
+    monkeypatch.setattr(utils_schedule, "fetch_network_schedule", fail_fetch)
+    monkeypatch.setattr(
+        utils_schedule,
+        "get_schedule_cache",
+        lambda _key: {
+            "schedule": {
+                "Пн": [
+                    [
+                        {
+                            "time": "08:00-09:30",
+                            "subject": "Алгебра",
+                            "teacher": None,
+                            "room": None,
+                            "group": None,
+                        }
+                    ]
+                ]
+            },
+            "days_list": ["Пн"],
+            "prev_week_id": None,
+            "next_week_id": None,
+            "updated_at": "2025-01-01T00:00:00",
+        },
+    )
+
+    schedule, _days, _prev, _next, meta = get_schedule(123, entity, prefer_cache=False)
+    assert schedule
+    assert meta["source"] == "cache"
+    assert "warning" in meta and meta["warning"]

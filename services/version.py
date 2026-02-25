@@ -1,13 +1,14 @@
 """GitHub version status provider with local/remote commit comparison."""
 
-from datetime import datetime, timedelta
+from __future__ import annotations
+
 import subprocess
+from datetime import datetime, timedelta
 
-import requests
-
+from services.http_client import http_client
 from services.logger import setup_logger
 
-logger = setup_logger("version")
+logger = setup_logger(__name__)
 
 GITHUB_REPO_API = "https://api.github.com/repos/drakkoshkka/APKLife/commits/main"
 GITHUB_RELEASES_API = "https://api.github.com/repos/drakkoshkka/APKLife/releases/latest"
@@ -23,8 +24,7 @@ _CACHE = {
 }
 
 
-def _get_local_commit():
-    """Read current local git short hash."""
+def _get_local_commit() -> str | None:
     try:
         result = subprocess.run(
             ["git", "rev-parse", "--short", "HEAD"],
@@ -37,34 +37,29 @@ def _get_local_commit():
         return None
 
 
-def _get_remote_commit():
-    """Read latest remote main commit from GitHub API."""
+def _get_remote_commit() -> str | None:
     try:
-        response = requests.get(GITHUB_REPO_API, timeout=5)
-        response.raise_for_status()
-        payload = response.json()
-        return (payload.get("sha") or "")[:7] or None
-    except requests.RequestException as error:
-        logger.warning("Remote commit check failed: %s", error)
+        payload = http_client.get_json(GITHUB_REPO_API)
+        if isinstance(payload, dict):
+            return (payload.get("sha") or "")[:7] or None
+        return None
+    except Exception:  # noqa: BLE001
+        logger.exception("Remote commit check failed")
         return None
 
 
-def _get_latest_release():
-    """Read latest GitHub release tag."""
+def _get_latest_release() -> str | None:
     try:
-        response = requests.get(GITHUB_RELEASES_API, timeout=5)
-        if response.status_code == 404:
-            return None
-        response.raise_for_status()
-        payload = response.json()
-        return payload.get("tag_name")
-    except requests.RequestException as error:
-        logger.warning("Release check failed: %s", error)
+        payload = http_client.get_json(GITHUB_RELEASES_API)
+        if isinstance(payload, dict):
+            return payload.get("tag_name")
+        return None
+    except Exception:  # noqa: BLE001
+        logger.exception("Release check failed")
         return None
 
 
-def get_version_status():
-    """Get cached version status for UI banners."""
+def get_version_status() -> dict[str, object]:
     now = datetime.now()
     if now < _CACHE["expires_at"]:
         return _CACHE["data"]

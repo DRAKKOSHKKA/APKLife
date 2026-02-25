@@ -33,8 +33,7 @@ def _resolve_tool(name: str) -> str:
             return resolved
 
     raise BridgeBuildError(
-        f"Не найден инструмент '{name}' в PATH. "
-        "Установите инструмент и перезапустите терминал."
+        f"Не найден инструмент '{name}' в PATH. " "Установите инструмент и перезапустите терминал."
     )
 
 
@@ -59,8 +58,7 @@ def ensure_environment() -> None:
 
     if not os.environ.get("ANDROID_HOME") and not os.environ.get("ANDROID_SDK_ROOT"):
         raise BridgeBuildError(
-            "Не задан ANDROID_HOME/ANDROID_SDK_ROOT. "
-            "Добавьте Android SDK в переменные среды."
+            "Не задан ANDROID_HOME/ANDROID_SDK_ROOT. " "Добавьте Android SDK в переменные среды."
         )
 
     run([TOOLS["java"], "-version"])
@@ -73,10 +71,9 @@ def maybe_pull_latest(should_pull: bool) -> None:
 
 
 def _has_capacitor_config() -> bool:
-    return (
-        (ANDROID_BRIDGE_DIR / "capacitor.config.json").exists()
-        or (ANDROID_BRIDGE_DIR / "capacitor.config.ts").exists()
-    )
+    return (ANDROID_BRIDGE_DIR / "capacitor.config.json").exists() or (
+        ANDROID_BRIDGE_DIR / "capacitor.config.ts"
+    ).exists()
 
 
 def ensure_bridge_project(app_id: str, app_name: str) -> None:
@@ -94,7 +91,10 @@ def ensure_bridge_project(app_id: str, app_name: str) -> None:
 
     node_modules = ANDROID_BRIDGE_DIR / "node_modules"
     if not node_modules.exists():
-        run([TOOLS["npm"], "install", "@capacitor/core", "@capacitor/android"], cwd=ANDROID_BRIDGE_DIR)
+        run(
+            [TOOLS["npm"], "install", "@capacitor/core", "@capacitor/android"],
+            cwd=ANDROID_BRIDGE_DIR,
+        )
 
     if not _has_capacitor_config():
         run([TOOLS["npx"], "cap", "init", app_name, app_id], cwd=ANDROID_BRIDGE_DIR)
@@ -113,7 +113,8 @@ def write_web_assets(base_url: str) -> None:
   <title>APKLife Android</title>
   <style>
     body {{ font-family: sans-serif; margin: 0; padding: 16px; background: #f5f6fa; }}
-    .card {{ background: white; border-radius: 12px; padding: 16px; box-shadow: 0 4px 16px rgba(0,0,0,.08); }}
+    .card {{ background: white; border-radius: 12px; padding: 16px;
+      box-shadow: 0 4px 16px rgba(0,0,0,.08); }}
     a {{ color: #0d6efd; }}
   </style>
 </head>
@@ -145,8 +146,7 @@ def _resolve_gradle() -> Path:
     gradle = android_dir / ("gradlew.bat" if os.name == "nt" else "gradlew")
     if not gradle.exists():
         raise BridgeBuildError(
-            f"Не найден gradle wrapper: {gradle}. "
-            "Проверьте корректность `npx cap add android`."
+            f"Не найден gradle wrapper: {gradle}. " "Проверьте корректность `npx cap add android`."
         )
     return gradle
 
@@ -173,32 +173,56 @@ def build_artifacts(release: bool, build_aab: bool) -> list[Path]:
 
     artifacts: list[Path] = []
     if release:
-        artifacts.append(android_dir / "app" / "build" / "outputs" / "apk" / "release" / "app-release.apk")
+        artifacts.append(
+            android_dir / "app" / "build" / "outputs" / "apk" / "release" / "app-release.apk"
+        )
     else:
-        artifacts.append(android_dir / "app" / "build" / "outputs" / "apk" / "debug" / "app-debug.apk")
+        artifacts.append(
+            android_dir / "app" / "build" / "outputs" / "apk" / "debug" / "app-debug.apk"
+        )
 
     if build_aab:
-        artifacts.append(android_dir / "app" / "build" / "outputs" / "bundle" / "release" / "app-release.aab")
+        artifacts.append(
+            android_dir / "app" / "build" / "outputs" / "bundle" / "release" / "app-release.aab"
+        )
 
     missing = [path for path in artifacts if not path.exists()]
     if missing:
-        raise BridgeBuildError("Артефакты не найдены:\n" + "\n".join(f"  - {path}" for path in missing))
+        raise BridgeBuildError(
+            "Артефакты не найдены:\n" + "\n".join(f"  - {path}" for path in missing)
+        )
 
     return [path.resolve() for path in artifacts]
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Сборка Android APK bridge для APKLife (Variant A)")
-    parser.add_argument("--pull", action="store_true", help="Перед сборкой обновить репозиторий через git pull --rebase")
+    parser = argparse.ArgumentParser(
+        description="Сборка Android APK bridge для APKLife (Variant A)"
+    )
+    parser.add_argument(
+        "--pull",
+        action="store_true",
+        help="Перед сборкой обновить репозиторий через git pull --rebase",
+    )
 
     mode_group = parser.add_mutually_exclusive_group()
     mode_group.add_argument("--debug", action="store_true", help="Собрать debug APK (по умолчанию)")
     mode_group.add_argument("--release", action="store_true", help="Собрать release APK")
 
-    parser.add_argument("--aab", action="store_true", help="Дополнительно собрать release AAB (bundleRelease)")
-    parser.add_argument("--clean", action="store_true", help="Удалить android_bridge/android/app/build перед сборкой")
+    parser.add_argument(
+        "--aab", action="store_true", help="Дополнительно собрать release AAB (bundleRelease)"
+    )
+    parser.add_argument(
+        "--clean",
+        action="store_true",
+        help="Удалить android_bridge/android/app/build перед сборкой",
+    )
 
-    parser.add_argument("--base-url", default="http://127.0.0.1:5000", help="URL локального/удалённого web-приложения")
+    parser.add_argument(
+        "--base-url",
+        default="http://127.0.0.1:5000",
+        help="URL локального/удалённого web-приложения",
+    )
     parser.add_argument("--app-id", default="ru.apklife.mobile", help="Android application id")
     parser.add_argument("--app-name", default="APKLife", help="Название Android приложения")
     return parser.parse_args()
@@ -232,4 +256,4 @@ if __name__ == "__main__":
         main()
     except BridgeBuildError as error:
         print(f"❌ Ошибка bridge-сборки: {error}")
-        raise SystemExit(1)
+        raise SystemExit(1) from error
