@@ -445,3 +445,28 @@ body.dark-mode .dev-status {
 	background: #332d3f;
 	color: #e6e1e5;
 }
+
+
+body.dark-mode .teacher,
+body.dark-mode .room,
+body.dark-mode .group {
+	background: #3a3446;
+}
+
+body.dark-mode .card-header,
+body.dark-mode .bg-light,
+body.dark-mode .alert,
+body.dark-mode .alert-warning,
+body.dark-mode .alert-success,
+body.dark-mode .alert-secondary {
+	background-color: #2a2533 !important;
+	color: #e6e1e5 !important;
+	border-color: #4b4556 !important;
+}
+
+body.dark-mode .table,
+body.dark-mode .table * {
+	background-color: #211f26 !important;
+	color: #e6e1e5 !important;
+	border-color: #49454f !important;
+}
