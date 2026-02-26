@@ -37,6 +37,7 @@ class HttpClient:
         url: str,
         *,
         params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
         timeout: tuple[int, int] | None = None,
     ) -> str:
         """GET URL and return response text."""
@@ -44,15 +45,16 @@ class HttpClient:
             response = self.session.get(
                 url,
                 params=params,
+                headers=headers,
                 timeout=timeout
                 or (settings.connect_timeout_seconds, settings.read_timeout_seconds),
             )
             response.raise_for_status()
             response.encoding = "utf-8"
             logger.info("http_get_success url=%s status=%s", response.url, response.status_code)
-            return response.text
+            return str(response.text)
         except requests.RequestException as exc:
-            logger.exception("http_get_failed url=%s", url)
+            logger.warning("http_get_failed url=%s reason=%s", url, exc)
             raise ScheduleFetchError(f"Network request failed for {url}") from exc
 
     def get_json(
@@ -60,6 +62,7 @@ class HttpClient:
         url: str,
         *,
         params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
         timeout: tuple[int, int] | None = None,
     ) -> Any:
         """GET URL and return JSON payload."""
@@ -67,6 +70,7 @@ class HttpClient:
             response = self.session.get(
                 url,
                 params=params,
+                headers=headers,
                 timeout=timeout
                 or (settings.connect_timeout_seconds, settings.read_timeout_seconds),
             )
@@ -76,10 +80,53 @@ class HttpClient:
             )
             return response.json()
         except requests.RequestException as exc:
-            logger.exception("http_get_json_failed url=%s", url)
+            logger.warning("http_get_json_failed url=%s reason=%s", url, exc)
             raise ScheduleFetchError(f"Network request failed for {url}") from exc
         except ValueError as exc:
-            logger.exception("http_json_decode_failed url=%s", url)
+            logger.warning("http_json_decode_failed url=%s", url)
+            raise ScheduleFetchError(f"Invalid JSON from {url}") from exc
+
+    def get_json_with_meta(
+        self,
+        url: str,
+        *,
+        params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+        timeout: tuple[int, int] | None = None,
+        allow_statuses: tuple[int, ...] = (304,),
+    ) -> tuple[int, Any | None, dict[str, str]]:
+        """GET URL and return (status, payload, headers), tolerating selected statuses."""
+        try:
+            response = self.session.get(
+                url,
+                params=params,
+                headers=headers,
+                timeout=timeout
+                or (settings.connect_timeout_seconds, settings.read_timeout_seconds),
+            )
+            status_code = response.status_code
+            headers_out = dict(response.headers)
+
+            if status_code in allow_statuses:
+                logger.info(
+                    "http_get_json_not_modified url=%s status=%s", response.url, status_code
+                )
+                return status_code, None, headers_out
+
+            if status_code >= 400:
+                logger.warning(
+                    "http_get_json_error_status url=%s status=%s", response.url, status_code
+                )
+                return status_code, None, headers_out
+
+            payload: Any | None = response.json()
+            logger.info("http_get_json_meta_success url=%s status=%s", response.url, status_code)
+            return status_code, payload, headers_out
+        except requests.RequestException as exc:
+            logger.warning("http_get_json_meta_failed url=%s reason=%s", url, exc)
+            raise ScheduleFetchError(f"Network request failed for {url}") from exc
+        except ValueError as exc:
+            logger.warning("http_json_meta_decode_failed url=%s", url)
             raise ScheduleFetchError(f"Invalid JSON from {url}") from exc
 
 

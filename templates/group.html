@@ -1,27 +1,18 @@
 {% extends "base.html" %}
 {% block header %}
 <div class="d-flex justify-content-between align-items-center schedule-header">
-	<a
-		href="/group/?group_name={{ group_info.SearchString|urlencode }}{% if prev_week_id is not none %}&week_id={{ prev_week_id }}{% endif %}"
-		class="btn btn-sm btn-outline-light mx-2 {% if not prev_week_id %}disabled{% endif %}"
-	>
+	<a href="/group/?group_name={{ group_info.SearchString|urlencode }}{% if prev_week_id is not none %}&week_id={{ prev_week_id }}{% endif %}&lang={{ lang }}" class="btn btn-sm btn-outline-light mx-2 {% if not prev_week_id %}disabled{% endif %}">
 		<i class="bi bi-chevron-left"></i>
 	</a>
-	<h4 class="m-0 schedule-title">Расписание {{ group_info.SearchString }}</h4>
-	<a
-		href="/group/?group_name={{ group_info.SearchString|urlencode }}{% if next_week_id is not none %}&week_id={{ next_week_id }}{% endif %}"
-		class="btn btn-sm btn-outline-light mx-2 {% if not next_week_id %}disabled{% endif %}"
-	>
+	<h4 class="m-0 schedule-title">{{ t('schedule') }} {{ group_info.SearchString }}</h4>
+	<a href="/group/?group_name={{ group_info.SearchString|urlencode }}{% if next_week_id is not none %}&week_id={{ next_week_id }}{% endif %}&lang={{ lang }}" class="btn btn-sm btn-outline-light mx-2 {% if not next_week_id %}disabled{% endif %}">
 		<i class="bi bi-chevron-right"></i>
 	</a>
 </div>
 
 <div class="day-nav d-flex justify-content-between flex-wrap mt-2 p-2">
 	{% for day in days_list %}
-	<a
-		href="/group/?group_name={{ group_info.SearchString|urlencode }}{% if week_id is not none %}&week_id={{ week_id }}{% endif %}&day={{ day.split(' ')[0] }}"
-		class="btn btn-sm mb-1 {% if active_day and day.split(' ')[0] == active_day.split(' ')[0] %}btn-light text-primary fw-bold{% else %}btn-outline-light{% endif %}"
-	>
+	<a href="/group/?group_name={{ group_info.SearchString|urlencode }}{% if week_id is not none %}&week_id={{ week_id }}{% endif %}&day={{ day.split(' ')[0] }}&lang={{ lang }}" class="btn btn-sm mb-1 {% if active_day and day.split(' ')[0] == active_day.split(' ')[0] %}btn-light text-primary fw-bold{% else %}btn-outline-light{% endif %}">
 		{{ day.split(" ")[1].split(".")[0] }}
 	</a>
 	{% endfor %}
@@ -29,10 +20,7 @@
 {% endblock %}
 
 {% block content %}
-<div
-	id="schedule-content"
-	data-refresh-url="/group/refresh?group_name={{ group_info.SearchString|urlencode }}{% if week_id is not none %}&week_id={{ week_id }}{% endif %}{% if active_day %}&day={{ active_day.split(' ')[0] }}{% endif %}"
->
+<div id="schedule-content" data-refresh-url="/group/refresh?group_name={{ group_info.SearchString|urlencode }}{% if week_id is not none %}&week_id={{ week_id }}{% endif %}{% if active_day %}&day={{ active_day.split(' ')[0] }}{% endif %}&lang={{ lang }}">
 	{% include "partials/schedule_content.html" %}
 </div>
 {% endblock %}

@@ -1,16 +1,16 @@
-## Summary
+## Summary / Краткое описание
 
-## Motivation
+## Motivation / Мотивация
 
-## Changes
+## Changes / Изменения
 - 
 
-## Testing
+## Testing / Проверки
 - [ ] `make test`
 - [ ] `make lint`
-- [ ] Manual smoke test
+- [ ] Manual smoke test / Ручной smoke-тест
 
-## Checklist
-- [ ] No wildcard imports
-- [ ] Types added/updated where needed
-- [ ] Docs updated
+## Checklist / Чек-лист
+- [ ] No wildcard imports / Нет wildcard-импортов
+- [ ] Types added/updated where needed / Типы добавлены или обновлены при необходимости
+- [ ] Docs updated / Документация обновлена

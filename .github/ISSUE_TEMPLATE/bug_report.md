@@ -1,25 +1,29 @@
 ---
-name: Bug report
-about: Report a reproducible issue
+name: Bug report / Отчёт об ошибке
+about: Report a reproducible issue / Сообщить о воспроизводимой ошибке
 title: "[BUG] "
 labels: bug
 assignees: ''
 ---
 
-## Description
+## Description / Описание
+Briefly describe the problem.
+Кратко опишите проблему.
 
-## Steps to reproduce
+## Steps to reproduce / Шаги для воспроизведения
 1.
 2.
 3.
 
-## Expected behavior
+## Expected behavior / Ожидаемое поведение
 
-## Actual behavior
+## Actual behavior / Фактическое поведение
 
-## Environment
-- OS:
-- Python version:
-- App version:
+## Environment / Окружение
+- OS / ОС:
+- Python version / Версия Python:
+- App version / Версия приложения:
 
-## Logs / screenshots
+## Logs / screenshots / Логи / скриншоты
+Attach relevant logs, traces, or screenshots.
+Приложите релевантные логи, трассировки или скриншоты.

@@ -20,6 +20,7 @@ from services.exceptions import (
     ScheduleSchemaChangedError,
 )
 from services.http_client import http_client
+from services.i18n import tr
 from services.logger import setup_logger
 from services.metrics import inc, mark_source, set_value
 from services.sources.html_source import InstituteHtmlScheduleSource
@@ -154,7 +155,7 @@ def fetch_network_schedule(week_id: int, entity_info: dict[str, object]):
             [],
             None,
             None,
-            _meta("none", None, "Некорректные параметры группы.", error_type="validation"),
+            _meta("none", None, tr("invalid_group_params"), error_type="validation"),
         )
 
     cache_key = build_cache_key(entity_info["SearchId"], week_id)
@@ -196,7 +197,7 @@ def fetch_network_schedule(week_id: int, entity_info: dict[str, object]):
             _meta(
                 "network",
                 datetime.now().isoformat(timespec="seconds"),
-                "Актуальные данные загружены из интернета.",
+                tr("loaded_network"),
             ),
         )
     except (ScheduleFetchError, ScheduleSchemaChangedError, ScheduleParseError) as error:
@@ -223,7 +224,7 @@ def get_schedule(week_id: int, entity_info: dict[str, object], prefer_cache: boo
             [],
             None,
             None,
-            _meta("none", None, "Данные для загрузки не указаны.", error_type="validation"),
+            _meta("none", None, tr("data_missing"), error_type="validation"),
         )
 
     cache_key = build_cache_key(entity_info["SearchId"], week_id)
@@ -244,7 +245,7 @@ def get_schedule(week_id: int, entity_info: dict[str, object], prefer_cache: boo
                     if isinstance(cache_entry.get("updated_at"), str)
                     else None
                 ),
-                "Показана сохранённая локальная версия.",
+                tr("shown_cached"),
             ),
         )
 
@@ -265,8 +266,8 @@ def get_schedule(week_id: int, entity_info: dict[str, object], prefer_cache: boo
                         if isinstance(cache_entry.get("updated_at"), str)
                         else None
                     ),
-                    "Показана сохранённая локальная версия.",
-                    warning="Source unavailable or structure changed. Showing cached data.",
+                    tr("shown_cached"),
+                    warning=tr("warning_source_changed"),
                     error_type=error.__class__.__name__,
                 ),
             )
@@ -278,8 +279,8 @@ def get_schedule(week_id: int, entity_info: dict[str, object], prefer_cache: boo
             _meta(
                 "none",
                 None,
-                "Не удалось получить расписание и кэш отсутствует.",
-                warning="Source unavailable or structure changed. Showing cached data.",
+                tr("no_data_no_cache"),
+                warning=tr("warning_source_changed"),
                 error_type=error.__class__.__name__,
             ),
         )

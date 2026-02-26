@@ -7,6 +7,7 @@ from typing import Any
 
 from services.cache_store import build_cache_key, get_schedule_cache
 from services.exceptions import ScheduleError
+from services.i18n import tr
 from services.metrics import snapshot
 from services.runtime_state import mark_error, mark_success
 from services.utils_schedule import (
@@ -102,12 +103,12 @@ def load_schedule_context(args):
     context["week_id"] = week_id
 
     if not group_name:
-        context["error"] = "Не указано название группы"
+        context["error"] = tr("group_required")
         return context
 
     entity_info, corrected_name = _resolve_entity(group_name)
     if not entity_info:
-        context["error"] = f"'{group_name}' не найдено"
+        context["error"] = tr("group_not_found", name=group_name)
         return context
 
     force_refresh = args.get("force_refresh") == "1"
@@ -156,11 +157,11 @@ def force_refresh_context(args):
     week_id = args.get("week_id", type=int) or get_current_week()
 
     if not group_name:
-        return build_base_context() | {"error": "Не указано название группы"}
+        return build_base_context() | {"error": tr("group_required")}
 
     entity_info, corrected_name = _resolve_entity(group_name)
     if not entity_info:
-        return build_base_context() | {"error": f"'{group_name}' не найдено"}
+        return build_base_context() | {"error": tr("group_not_found", name=group_name)}
 
     try:
         schedule, days_list, prev_week, next_week, source_meta = fetch_network_schedule(
@@ -202,49 +203,4 @@ def force_refresh_context(args):
         mark_success()
     else:
         mark_error(str(context.get("error")))
-    return context
-
-
-def force_refresh_context(args):
-    """Force network refresh used by 'Обновить сейчас' action and AJAX refresh."""
-    group_name = (args.get("group_name") or "").strip()
-    week_id = args.get("week_id", type=int) or get_current_week()
-
-    if not group_name:
-        return build_base_context() | {"error": "Не указано название группы"}
-
-    entity_info, corrected_name = _resolve_entity(group_name)
-    if not entity_info:
-        return build_base_context() | {"error": f"'{group_name}' не найдено"}
-
-    schedule, days_list, prev_week, next_week, source_meta = fetch_network_schedule(
-        week_id,
-        entity_info,
-    )
-
-    active_day = detect_active_day(schedule, args.get("day"))
-    if active_day:
-        schedule = {active_day: schedule[active_day]}
-
-    context = build_base_context()
-    context.update(
-        {
-            "group_info": entity_info,
-            "schedule": schedule,
-            "days_list": days_list,
-            "prev_week_id": prev_week,
-            "next_week_id": next_week,
-            "active_day": active_day,
-            "corrected_name": corrected_name,
-            "no_lessons_week": not bool(schedule),
-            "week_id": week_id,
-            "schedule_source": source_meta.get("source"),
-            "schedule_message": source_meta.get("message"),
-            "cache_updated_at": source_meta.get("cache_updated_at"),
-            "error": source_meta.get("message") if not schedule else None,
-            "offline": not internet_available(),
-            "metrics": snapshot(),
-        }
-    )
-    context = _with_cache_state(context, week_id, entity_info)
     return context

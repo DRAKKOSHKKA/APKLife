@@ -25,6 +25,14 @@ class Settings:
     internet_check_timeout_seconds: int = int(os.getenv("INTERNET_CHECK_TIMEOUT_SECONDS", "3"))
     connect_timeout_seconds: int = int(os.getenv("CONNECT_TIMEOUT_SECONDS", "5"))
     read_timeout_seconds: int = int(os.getenv("READ_TIMEOUT_SECONDS", "15"))
+    github_token: str = os.getenv("GITHUB_TOKEN", "").strip()
+    github_api_user_agent: str = os.getenv("GITHUB_API_USER_AGENT", "APKLife")
+    github_connect_timeout_seconds: int = int(
+        os.getenv("GITHUB_CONNECT_TIMEOUT_SECONDS", os.getenv("CONNECT_TIMEOUT_SECONDS", "5"))
+    )
+    github_read_timeout_seconds: int = int(
+        os.getenv("GITHUB_READ_TIMEOUT_SECONDS", os.getenv("READ_TIMEOUT_SECONDS", "15"))
+    )
     retry_total: int = int(os.getenv("HTTP_RETRY_TOTAL", "3"))
     retry_backoff: float = float(os.getenv("HTTP_RETRY_BACKOFF", "0.5"))
     cache_dir: Path = Path(os.getenv("CACHE_DIR", "cache"))

@@ -13,6 +13,13 @@ const offlineIndicator = document.getElementById("offline-indicator");
 
 const DEV_KEY = "devMode";
 
+function updateLanguage(lang) {
+	const url = new URL(window.location.href);
+	url.searchParams.set("lang", lang);
+	window.location.href = url.toString();
+}
+
+
 function setOfflineIndicator(isOffline) {
 	if (!offlineIndicator) return;
 	offlineIndicator.classList.toggle("d-none", !isOffline);
@@ -145,6 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	const darkModeSwitch = document.getElementById("darkModeSwitch");
 	const devModeSwitch = document.getElementById("devModeSwitch");
 	const loadLogsBtn = document.getElementById("loadLogsBtn");
+	const languageSelect = document.getElementById("languageSelect");
 	const body = document.body;
 
 	let suggestions = [];
@@ -172,6 +180,12 @@ document.addEventListener("DOMContentLoaded", () => {
 		});
 	}
 
+	if (languageSelect) {
+		languageSelect.addEventListener("change", function () {
+			updateLanguage(this.value);
+		});
+	}
+
 	applyDevModeState();
 	setupDevModeUnlock();
 	registerServiceWorker();
@@ -187,7 +201,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		.then((data) => {
 			suggestions = data;
 		})
-		.catch((error) => console.error("Ошибка загрузки подсказок:", error));
+		.catch((error) => console.error("Suggestions loading error:", error));
 
 	if (!groupInput || !suggestionsContainer || !searchForm) return;
 

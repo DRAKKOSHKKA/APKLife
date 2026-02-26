@@ -15,9 +15,41 @@ See full rules in `docs/ARCHITECTURE.md`.
 ```bash
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
-make install
+pip install -r requirements-dev.txt
 make run
 ```
+
+
+## Multilingual interface
+- Built-in languages: **Russian** (`ru`) and **English** (`en`).
+- Use the language selector in **Settings**, or append `?lang=ru|en` to any URL.
+- Selected language is stored in a cookie and restored automatically.
+
+## GitHub collaboration language / Язык работы в GitHub
+- GitHub templates are bilingual (EN/RU): Issue templates, PR template, and contributing docs.
+- Шаблоны GitHub двуязычные (EN/RU): шаблоны issue, PR и документация для контрибьюторов.
+
+## Requirements files
+- Runtime dependencies: `requirements.txt`
+- Development dependencies: `requirements-dev.txt`
+
+```bash
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+```
+
+
+## Optional GitHub update check token
+GitHub update checks are **best-effort** and work without any token.
+
+If you want higher GitHub API limits, you may provide your **own** Personal Access Token:
+
+```bash
+export GITHUB_TOKEN=your_personal_token
+```
+
+- Token is optional and never required for app usage.
+- Do not commit `.env` with secrets.
 
 ## Environment configuration
 Copy `.env.example` and override values via environment variables.

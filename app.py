@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from werkzeug.exceptions import HTTPException
 
 from routes.group import bp_group
 from routes.main import bp_main
 from services.config import settings
+from services.i18n import current_lang, resolve_lang, tr
 from services.logger import setup_logger
 from services.metrics import snapshot
 from services.version import get_version_status
@@ -22,6 +23,17 @@ def create_app() -> Flask:
     app.register_blueprint(bp_main)
     app.register_blueprint(bp_group, url_prefix="/group")
 
+    @app.before_request
+    def set_request_language() -> None:
+        resolve_lang()
+
+    @app.after_request
+    def persist_language(response):
+        lang = current_lang()
+        if request.cookies.get("lang") != lang:
+            response.set_cookie("lang", lang, max_age=60 * 60 * 24 * 365)
+        return response
+
     @app.context_processor
     def inject_version_status():
         """Inject global status into all templates."""
@@ -30,6 +42,9 @@ def create_app() -> Flask:
             "offline": False,
             "cache_state": "unknown",
             "metrics": snapshot(),
+            "t": tr,
+            "lang": current_lang(),
+            "supported_langs": ("ru", "en"),
         }
 
     @app.errorhandler(Exception)
@@ -53,7 +68,7 @@ def create_app() -> Flask:
                 "errors/error.html",
                 code=500,
                 name="Internal Server Error",
-                description="Произошла непредвиденная ошибка.",
+                description=tr("unexpected_error"),
             ),
             500,
         )

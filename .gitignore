@@ -7,3 +7,5 @@ android_bridge/android/
 android_native/.gradle/
 android_native/build/
 android_native/app/build/
+
+.env
