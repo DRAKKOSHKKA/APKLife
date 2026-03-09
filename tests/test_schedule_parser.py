@@ -25,14 +25,46 @@ def test_parse_valid_page_success() -> None:
     assert result["next_week_id"] == 102
 
 
+def test_problematic_realistic_html_is_parsed() -> None:
+    result = parse_schedule_html(_fixture("problematic_realistic.html"))
+    assert any("Понедельник" in day for day in result["days_list"])
+    first_day = next(iter(result["schedule"]))
+    assert result["schedule"][first_day][0][0]["subject"] == "Математика"
+
+
+def test_empty_first_header_is_accepted() -> None:
+    result = parse_schedule_html(_fixture("empty_first_header.html"))
+    assert result["days_list"]
+
+
+def test_no_thead_tbody_is_accepted_in_tolerant_mode() -> None:
+    result = parse_schedule_html(_fixture("no_thead_tbody.html"))
+    assert "Monday" in result["days_list"][0]
+
+
 def test_schema_change_detection_missing_table() -> None:
     with pytest.raises(ScheduleSchemaChangedError):
         parse_schedule_html(_fixture("missing_table.html"))
 
 
+def test_schema_change_detection_invalid_table() -> None:
+    with pytest.raises(ScheduleSchemaChangedError):
+        parse_schedule_html(_fixture("invalid_table.html"))
+
+
 def test_schema_change_detection_changed_schema() -> None:
     with pytest.raises(ScheduleSchemaChangedError):
         parse_schedule_html(_fixture("changed_schema.html"))
+
+
+def test_time_header_format_variations() -> None:
+    result = parse_schedule_html(_fixture("problematic_realistic.html"))
+    first_day = next(iter(result["schedule"]))
+    assert result["schedule"][first_day][0][0]["time"] in {
+        "08.00 - 09.30",
+        "08:00-09:30",
+        "08:00 - 09:30",
+    }
 
 
 def test_normalization_logic() -> None:
