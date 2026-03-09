@@ -19,3 +19,6 @@
 ---
 For full project documentation, choose your language above.
 Для полной документации проекта выберите язык выше.
+
+New version of the documentation: https://apklife.gitbook.io/o
+Новая версия документации: https://apklife.gitbook.io/o
