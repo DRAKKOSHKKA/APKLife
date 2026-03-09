@@ -6,6 +6,10 @@ labels: bug
 assignees: ''
 ---
 
+## Language / Язык
+- [ ] English
+- [ ] Русский
+
 ## Description / Описание
 Briefly describe the problem.
 Кратко опишите проблему.
@@ -27,3 +31,9 @@ Briefly describe the problem.
 ## Logs / screenshots / Логи / скриншоты
 Attach relevant logs, traces, or screenshots.
 Приложите релевантные логи, трассировки или скриншоты.
+
+## Docs checked / Проверенная документация
+- [README EN](../../README.en.md)
+- [README RU](../../README.ru.md)
+- [Architecture EN](../../docs/ARCHITECTURE.en.md)
+- [Architecture RU](../../docs/ARCHITECTURE.ru.md)

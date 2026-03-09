@@ -1,92 +1,21 @@
 # APKLife
 
-APKLife is a Flask-based student schedule application with cache-first loading, offline fallback, parser hardening, PWA support, and Android build options.
+> Student-first schedule app with cache-first loading, offline fallback, resilient parsing, PWA mode, and Android packaging.
 
-## Architecture overview
-- **Presentation:** Flask routes in `routes/`
-- **Service orchestration:** `services/schedule.py`, `services/utils_schedule.py`
-- **Source integration:** `services/http_client.py`, `services/schedule_parser.py`, `services/sources/`
-- **Persistence:** `services/cache_store.py`
-- **Diagnostics:** metrics, structured logs, `/health`
+## 🌐 Language / Язык
+- 🇬🇧 English: [README.en.md](README.en.md)
+- 🇷🇺 Русский: [README.ru.md](README.ru.md)
 
-See full rules in `docs/ARCHITECTURE.md`.
+## Quick navigation
+- Architecture: [EN](docs/ARCHITECTURE.en.md) | [RU](docs/ARCHITECTURE.ru.md)
+- Contributing: [EN](CONTRIBUTING.en.md) | [RU](CONTRIBUTING.ru.md)
+- Code of Conduct: [EN](CODE_OF_CONDUCT.en.md) | [RU](CODE_OF_CONDUCT.ru.md)
+- Android Native (Variant B): [EN](android_native/README.en.md) | [RU](android_native/README.ru.md)
+- GitHub templates (bilingual):
+  - [Bug report](.github/ISSUE_TEMPLATE/bug_report.md)
+  - [Feature request](.github/ISSUE_TEMPLATE/feature_request.md)
+  - [Pull request template](.github/PULL_REQUEST_TEMPLATE.md)
 
-## Quick start
-```bash
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -r requirements-dev.txt
-make run
-```
-
-
-## Multilingual interface
-- Built-in languages: **Russian** (`ru`) and **English** (`en`).
-- Use the language selector in **Settings**, or append `?lang=ru|en` to any URL.
-- Selected language is stored in a cookie and restored automatically.
-
-## GitHub collaboration language / Язык работы в GitHub
-- GitHub templates are bilingual (EN/RU): Issue templates, PR template, and contributing docs.
-- Шаблоны GitHub двуязычные (EN/RU): шаблоны issue, PR и документация для контрибьюторов.
-
-## Requirements files
-- Runtime dependencies: `requirements.txt`
-- Development dependencies: `requirements-dev.txt`
-
-```bash
-pip install -r requirements.txt
-pip install -r requirements-dev.txt
-```
-
-
-## Optional GitHub update check token
-GitHub update checks are **best-effort** and work without any token.
-
-If you want higher GitHub API limits, you may provide your **own** Personal Access Token:
-
-```bash
-export GITHUB_TOKEN=your_personal_token
-```
-
-- Token is optional and never required for app usage.
-- Do not commit `.env` with secrets.
-
-## Environment configuration
-Copy `.env.example` and override values via environment variables.
-Key options:
-- `APP_HOST`, `APP_PORT`, `APP_DEBUG`
-- `REQUEST_TIMEOUT_SECONDS`
-- `CACHE_FILE`, `FAILED_HTML_DIR`
-
-## Testing
-```bash
-make test
-```
-
-## Linting and formatting
-```bash
-make lint
-```
-This runs ruff, black check, and mypy.
-
-## Troubleshooting
-- If schedule source structure changed, snapshots are saved in `data/failed_html/`.
-- If source is unavailable, app serves the last valid cache and returns warning metadata.
-- Check logs in `logs/app.log`.
-
-## Android build: Variant A (Capacitor wrapper)
-Fast WebView shell pointing to remote `base_url`.
-
-```bash
-python bridge.py --base-url https://example.com --debug
-python bridge.py --base-url https://example.com --release
-python bridge.py --base-url https://example.com --release --aab
-python bridge.py --base-url https://example.com --clean
-```
-Expected output paths:
-- Debug APK: `android_bridge/android/app/build/outputs/apk/debug/app-debug.apk`
-- Release APK: `android_bridge/android/app/build/outputs/apk/release/app-release.apk`
-- Release AAB: `android_bridge/android/app/build/outputs/bundle/release/app-release.aab`
-
-## Android build: Variant B (Flask inside APK)
-See `android_native/README.md` for Chaquopy-based offline variant.
+---
+For full project documentation, choose your language above.
+Для полной документации проекта выберите язык выше.
