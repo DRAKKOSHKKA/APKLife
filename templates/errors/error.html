@@ -1,18 +1,10 @@
 {% if error %}
 <div class="alert alert-danger" role="alert">{{ error }}</div>
-<a href="/"
-	><button class="btn btn-primary w-100">Назад</button></a
->
-{% elif corrected_name %}
-<div class="alert alert-info" role="alert">
-	Найдена похожая запись: <strong>{{ corrected_name }}</strong>
-</div>
+<a href="/?lang={{ lang }}"><button class="btn btn-primary w-100">{{ t('back') }}</button></a>
 {% elif code %}
 <div class="alert alert-danger" role="alert">
 	<strong>{{ code }} {{ name }}</strong>
 	{% if description %}<div>{{ description }}</div>{% endif %}
 </div>
-<a href="/"
-	><button class="btn btn-primary w-100">Назад</button></a
->
+<a href="/?lang={{ lang }}"><button class="btn btn-primary w-100">{{ t('back') }}</button></a>
 {% endif %}

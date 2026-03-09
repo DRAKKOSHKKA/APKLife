@@ -1,27 +1,21 @@
-# 📘 APK Life
+# APKLife
 
-**APK Life** — это проект, созданный для студентов и преподавателей **АПК Альметьевск**.
-Приложение позволяет удобно просматривать актуальное расписание занятий прямо с телефона или компьютера.
+> Student-first schedule app with cache-first loading, offline fallback, resilient parsing, PWA mode, and Android packaging.
 
-## ✨ Основные возможности
+## 🌐 Language / Язык
+- 🇬🇧 English: [README.en.md](README.en.md)
+- 🇷🇺 Русский: [README.ru.md](README.ru.md)
 
-- 📅 Просмотр расписания занятий для студентов и преподавателей.
-- 🔍 Быстрый поиск по группам и фамилиям преподавателей.
-- 🌐 Поддержка работы на разных устройствах (ПК, смартфон, планшет).
-- ⚡ Быстрое обновление данных расписания.
-- 🖤 Простота и удобный интерфейс.
+## Quick navigation
+- Architecture: [EN](docs/ARCHITECTURE.en.md) | [RU](docs/ARCHITECTURE.ru.md)
+- Contributing: [EN](CONTRIBUTING.en.md) | [RU](CONTRIBUTING.ru.md)
+- Code of Conduct: [EN](CODE_OF_CONDUCT.en.md) | [RU](CODE_OF_CONDUCT.ru.md)
+- Android Native (Variant B): [EN](android_native/README.en.md) | [RU](android_native/README.ru.md)
+- GitHub templates (bilingual):
+  - [Bug report](.github/ISSUE_TEMPLATE/bug_report.md)
+  - [Feature request](.github/ISSUE_TEMPLATE/feature_request.md)
+  - [Pull request template](.github/PULL_REQUEST_TEMPLATE.md)
 
-## 🚀 Технологии
-
-Проект построен на следующих технологиях:
-
-- **Frontend:** HTML, CSS, JavaScript
-- **Backend:** Python (Flask | FastAPI)
-- **База данных:** JSON
-
-### Запуск программы
-
-```bash
-pip install bs4 requests flask
-python app.py
-```
+---
+For full project documentation, choose your language above.
+Для полной документации проекта выберите язык выше.
