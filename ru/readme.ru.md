@@ -104,7 +104,7 @@ python bridge.py --base-url https://example.com --release --aab
 
 ### Вариант B: Offline Flask-in-APK
 
-См.:[ README.md](https://readme.md)
+См.: [README.md](readme.ru-1.md)
 
 ## Диагностика
 
