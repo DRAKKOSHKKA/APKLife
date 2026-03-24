@@ -372,6 +372,10 @@ def parse_schedule_html(html_text: str) -> ScheduleResult:
 
             schedule[day_key] = lessons_for_day
 
+        if not schedule:
+            _save_failed_html(html_text, "parsed_empty_schedule", dict(diagnostics))
+            raise ScheduleSchemaChangedError("Parsed table but extracted empty schedule")
+
         links = soup.select('a[href*="WeekId="]')
         prev_week_id = None
         next_week_id = None
