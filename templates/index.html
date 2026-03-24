@@ -1,38 +1,21 @@
-{% extends "base.html" %} {% block header %}
-<h4 class="m-0">📅 Расписание</h4>
-{% endblock %} {% block content %}
-<div class="card shadow-sm">
+{% extends "base.html" %}
+{% block header %}
+<h4 class="m-0">📅 {{ t('app_title') }}</h4>
+{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm search-card">
 	<div class="card-body">
-		<h5 class="card-title">Введите название</h5>
+		<h5 class="card-title">{{ t('search_hint') }}</h5>
 		<form id="searchForm" method="get" action="/group/">
 			<div class="mb-3 position-relative">
-				<input
-					type="text"
-					class="form-control"
-					id="group-input"
-					name="group_name"
-					placeholder="11 нмо, Климова Т.С., актовый зал"
-					autocomplete="on"
-				/>
-				<div
-					id="suggestions-container"
-					class="list-group position-absolute w-100"
-					style="display: none; z-index: 1000"
-				></div>
-				<input
-					type="hidden"
-					name="week_id"
-					value="{{ current_week }}"
-				/>
-				<input
-					type="hidden"
-					name="day"
-					value="{{ current_day_name }}"
-				/>
+				<input type="text" class="form-control" id="group-input" name="group_name" placeholder="{{ t('search_placeholder') }}" autocomplete="on" />
+				<div id="suggestions-container" class="list-group position-absolute w-100"></div>
+				<input type="hidden" name="week_id" value="{{ current_week }}" />
+				<input type="hidden" name="day" value="{{ current_day_name }}" />
+				<input type="hidden" name="lang" value="{{ lang }}" />
 			</div>
-			<button type="submit" class="btn btn-primary w-100">
-				Найти расписание
-			</button>
+			<button type="submit" class="btn btn-primary w-100">{{ t('find_schedule') }}</button>
 		</form>
 	</div>
 </div>

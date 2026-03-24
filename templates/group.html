@@ -1,106 +1,26 @@
-{% extends "base.html" %} {% block header %}
-<div class="d-flex justify-content-between align-items-center">
-	<a
-		href="/group/?group_name={{ group_info.SearchString }}{% if prev_week_id is not none %}&week_id={{ prev_week_id }}{% endif %}"
-		class="btn btn-sm btn-outline-light mx-2 {% if not prev_week_id %}disabled{% endif %}"
-	>
+{% extends "base.html" %}
+{% block header %}
+<div class="d-flex justify-content-between align-items-center schedule-header">
+	<a href="/group/?group_name={{ group_info.SearchString|urlencode }}{% if prev_week_id is not none %}&week_id={{ prev_week_id }}{% endif %}&lang={{ lang }}" class="btn btn-sm btn-outline-light mx-2 {% if not prev_week_id %}disabled{% endif %}">
 		<i class="bi bi-chevron-left"></i>
 	</a>
-
-	<h4 class="m-0">Расписание {{ group_info.SearchString }}</h4>
-
-	<a
-		href="/group/?group_name={{ group_info.SearchString }}{% if next_week_id is not none %}&week_id={{ next_week_id }}{% endif %}"
-		class="btn btn-sm btn-outline-light mx-2 {% if not next_week_id %}disabled{% endif %}"
-	>
+	<h4 class="m-0 schedule-title">{{ t('schedule') }} {{ group_info.SearchString }}</h4>
+	<a href="/group/?group_name={{ group_info.SearchString|urlencode }}{% if next_week_id is not none %}&week_id={{ next_week_id }}{% endif %}&lang={{ lang }}" class="btn btn-sm btn-outline-light mx-2 {% if not next_week_id %}disabled{% endif %}">
 		<i class="bi bi-chevron-right"></i>
 	</a>
 </div>
 
-<div
-	class="day-nav d-flex justify-content-between flex-wrap mt-2 p-2"
->
+<div class="day-nav d-flex justify-content-between flex-wrap mt-2 p-2">
 	{% for day in days_list %}
-	<a
-		href="/group/?group_name={{ group_info.SearchString }}{% if week_id is not none %}&week_id={{ week_id }}{% endif %}&day={{ day.split(' ')[0] }}"
-		class="btn btn-sm mb-1 {% if active_day and day.split(' ')[0] == active_day.split(' ')[0] %}btn-light text-primary fw-bold{% else %}btn-outline-light{% endif %}"
-	>
+	<a href="/group/?group_name={{ group_info.SearchString|urlencode }}{% if week_id is not none %}&week_id={{ week_id }}{% endif %}&day={{ day.split(' ')[0] }}&lang={{ lang }}" class="btn btn-sm mb-1 {% if active_day and day.split(' ')[0] == active_day.split(' ')[0] %}btn-light text-primary fw-bold{% else %}btn-outline-light{% endif %}">
 		{{ day.split(" ")[1].split(".")[0] }}
 	</a>
 	{% endfor %}
 </div>
-{% endblock %} {% block content %} {% for day, lessons in
-schedule.items() %}
-<div class="card mb-3 shadow-sm">
-	<div class="card-header bg-light">
-		<h5 class="card-title mb-0">{{ day }}</h5>
-	</div>
+{% endblock %}
 
-	<div class="card-body p-0">
-		{% if lessons %}
-		<ul class="list-group list-group-flush">
-			{% for lesson_list in lessons %}
-			<li
-				class="list-group-item"
-				style="background: transparent; border: none"
-			>
-				{% if lesson_list %} {% for lesson in lesson_list
-				%}
-				<div
-					class="lesson {% if lesson_list|length > 1 %}multiple-lesson{% endif %} {% if not lesson.subject %}empty-lesson{% if 'Сб' in day or 'Вс' in day %} weekend-empty{% endif %}{% endif %}"
-				>
-					<div class="lesson-content">
-						{% if lesson.time %}
-						<div class="time">
-							<i class="bi bi-clock"></i>
-							{% if lesson_list|length > 1 %}<small
-								>Часть {{ loop.index }}:</small
-							>{% endif %} {{ lesson.time }}
-						</div>
-						{% endif %} {% if lesson.subject %}
-						<div class="subject">
-							<i class="bi bi-book"></i> {{
-							lesson.subject[:-1] }}
-						</div>
-						{% if lesson.teacher %}
-						<div class="teacher">
-							<i class="bi bi-person"></i> {{
-							lesson.teacher[:-1] }}
-						</div>
-						{% endif %} {% if lesson.room %}
-						<div class="room">
-							<i class="bi bi-geo-alt"></i> {{
-							lesson.room }}
-						</div>
-						{% endif %} {% if lesson.group and
-						(group_info.Type == "Teacher" or
-						group_info.Type == "Classroom") %}
-						<div class="group">
-							<i class="bi bi-people"></i> {{
-							lesson.group }}
-						</div>
-						{% endif %} {% else %}
-						<div class="empty-lesson-content">
-							<div class="empty-lesson-icon">
-								<i class="bi bi-emoji-smile"></i>
-							</div>
-							<div class="empty-lesson-text">
-								Нет пары
-							</div>
-							<div class="empty-lesson-subtext">
-								Можно отдохнуть
-							</div>
-						</div>
-						{% endif %}
-					</div>
-				</div>
-				{% if not loop.last %}
-				<hr class="lesson-divider" />
-				{% endif %} {% endfor %} {% endif %}
-			</li>
-			{% endfor %}
-		</ul>
-		{% endif %}
-	</div>
+{% block content %}
+<div id="schedule-content" data-refresh-url="/group/refresh?group_name={{ group_info.SearchString|urlencode }}{% if week_id is not none %}&week_id={{ week_id }}{% endif %}{% if active_day %}&day={{ active_day.split(' ')[0] }}{% endif %}&lang={{ lang }}">
+	{% include "partials/schedule_content.html" %}
 </div>
-{% endfor %} {% endblock %}
+{% endblock %}
