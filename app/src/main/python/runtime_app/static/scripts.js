@@ -321,7 +321,13 @@ document.addEventListener("DOMContentLoaded", () => {
 	const pingResult = document.getElementById("ping-result");
 	const pingDownloadServerBtn = document.getElementById("pingDownloadServerBtn");
 	const downloadResult = document.getElementById("download-result");
-	
+
+	// Feature 5.1/5.2: Dev tools
+	const testHighlightBtn = document.getElementById("testHighlightBtn");
+	const testHighlightTime = document.getElementById("testHighlightTime");
+	const advancedUpdateCheckBtn = document.getElementById("advancedUpdateCheckBtn");
+	const advancedUpdateResult = document.getElementById("advanced-update-result");
+
 	const body = document.body;
 	let suggestions = [];
 
@@ -420,6 +426,43 @@ document.addEventListener("DOMContentLoaded", () => {
 			} catch (error) {
 				downloadResult.textContent = `Ошибка скачивания: ${error.message}`;
 				downloadResult.className = "dev-status text-danger";
+			}
+		});
+	}
+
+	// 5. Тестирование подсветки урока
+	if (testHighlightBtn && testHighlightTime) {
+		testHighlightBtn.addEventListener("click", () => {
+			const time = testHighlightTime.value;
+			if (!/^\d{1,2}:\d{2}$/.test(time)) {
+				alert("Введите время в формате ЧЧ:ММ (напр. 08:30)");
+				return;
+			}
+			const url = new URL(window.location.href);
+			url.searchParams.set("test_time", time);
+			window.location.href = url.toString();
+		});
+	}
+
+	// 6. Расширенная проверка обновлений
+	if (advancedUpdateCheckBtn && advancedUpdateResult) {
+		advancedUpdateCheckBtn.addEventListener("click", async () => {
+			advancedUpdateResult.textContent = "Запрос к GitHub API...";
+			try {
+				const response = await fetch("/version");
+				const data = await response.json();
+
+				const info = [
+					`GitHub v: ${data.latest_release || "Not found"}`,
+					`Current v: ${data.local_version}`,
+					`Type: ${data.update_type || "Unknown"}`,
+					`Latency: ${data.latency_ms}ms`,
+					`Update available: ${data.is_update_available ? "YES" : "NO"}`
+				].join("\n");
+
+				advancedUpdateResult.textContent = info;
+			} catch (error) {
+				advancedUpdateResult.textContent = `Error: ${error.message}`;
 			}
 		});
 	}

@@ -234,14 +234,16 @@ def get_version_status() -> dict[str, object]:
 
     had_failure = False
     rate_limit_message: str | None = None
+    started = perf_counter()
 
     try:
-        latest_release, release_from_cache, release_message = _fetch_latest_release()
+        latest_release_tag, release_from_cache, release_message = _fetch_latest_release()
+        latency_ms = round((perf_counter() - started) * 1000, 2)
 
         if release_message:
             rate_limit_message = release_message
 
-        if latest_release is None and not release_from_cache:
+        if latest_release_tag is None and not release_from_cache:
             had_failure = True
 
         if had_failure and not rate_limit_message:
@@ -250,20 +252,29 @@ def get_version_status() -> dict[str, object]:
             _set_success()
 
         status_text = rate_limit_message or _compose_status_text(
-            local_version, latest_release, had_failure
+            local_version, latest_release_tag, had_failure
         )
 
         is_update_available = False
-        if latest_release:
-            is_update_available = latest_release.lstrip('v') != local_version.lstrip('v')
+        if latest_release_tag:
+            is_update_available = latest_release_tag.lstrip('v') != local_version.lstrip('v')
+
+        # Определяем тип обновления (Release или Pre-Release)
+        # В GitHub API 'prerelease' булево поле, но мы парсим только тег в текущем коде
+        # Для простоты: если в теге есть 'beta', 'alpha', 'rc', то это Pre-Release
+        update_type = "Release"
+        if latest_release_tag and any(x in latest_release_tag.lower() for x in ["beta", "alpha", "rc", "pre"]):
+            update_type = "Pre-Release"
 
         data = {
             "local_version": local_version,
-            "latest_release": latest_release,
+            "latest_release": latest_release_tag,
             "is_update_available": is_update_available,
             "status_text": status_text,
             "last_checked_at": now.isoformat(timespec="seconds"),
-            "release_url": "https://github.com/DRAKKOSHKKA/APKLife/releases/latest"
+            "release_url": "https://github.com/DRAKKOSHKKA/APKLife/releases/latest",
+            "latency_ms": latency_ms,
+            "update_type": update_type
         }
         _CACHE["data"] = data
         _CACHE["expires_at"] = now + _CACHE_TTL
@@ -277,6 +288,8 @@ def get_version_status() -> dict[str, object]:
             "is_update_available": False,
             "status_text": "Ошибка при проверке обновлений.",
             "last_checked_at": now.isoformat(timespec="seconds"),
+            "latency_ms": 0,
+            "update_type": "Unknown"
         }
         _CACHE["data"] = data
         _CACHE["expires_at"] = now + _CACHE_TTL

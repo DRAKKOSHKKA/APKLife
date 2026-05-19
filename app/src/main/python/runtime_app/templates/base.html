@@ -129,8 +129,28 @@
 								<pre id="download-result" class="dev-status text-success mb-2">Скачивание не замерялось</pre>
 							</div>
 						</div>
+
+						<!-- 5. Тестирование выделения уроков (Feature 5.1) -->
+						<div class="mb-3">
+							<small class="text-muted fw-bold d-block mb-1">Тестирование подсветки урока:</small>
+							<div class="input-group input-group-sm mb-1">
+								<span class="input-group-text">Время</span>
+								<input type="text" id="testHighlightTime" class="form-control" placeholder="Напр. 08:40" value="08:40">
+								<button id="testHighlightBtn" class="btn btn-outline-primary">Тест</button>
+							</div>
+							<small class="text-muted" style="font-size: 0.7rem;">Обновит страницу с указанным временем для проверки выделения.</small>
+						</div>
+
+						<!-- 6. Продвинутая проверка обновлений (Feature 5.2) -->
+						<div class="mb-3">
+							<small class="text-muted fw-bold d-block mb-1">Продвинутая проверка обновлений:</small>
+							<button id="advancedUpdateCheckBtn" class="btn btn-sm btn-outline-warning w-100 mb-1">
+								<i class="bi bi-cloud-check-fill"></i> Запустить расширенную проверку
+							</button>
+							<pre id="advanced-update-result" class="dev-status text-warning">Информация об обновлениях не получена</pre>
+						</div>
 						
-						<!-- 5. Загрузка логов сервера -->
+						<!-- 7. Загрузка логов сервера -->
 						<button id="loadLogsBtn" class="btn btn-sm btn-outline-secondary w-100 mb-2">
 							<i class="bi bi-file-earmark-text-fill"></i> Загрузить логи сервера
 						</button>
