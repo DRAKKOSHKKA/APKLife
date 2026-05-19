@@ -9,6 +9,7 @@ __pycache__/
 app/src/main/python/runtime_app/logs/
 app/src/main/python/runtime_app/data/
 app/src/main/python/runtime_app/logs/
+.vscode/
 
 # Flask
 instance/
