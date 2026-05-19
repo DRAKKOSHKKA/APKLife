@@ -1,98 +1,133 @@
-# APKLife (Русский)
+# 📱 APKLife — Android-версия (WebView + Chaquopy)
 
-APKLife — это Flask-приложение для студентов с:
-- cache-first загрузкой,
-- офлайн-фолбэком,
-- устойчивым HTML-парсером,
-- опциональной проверкой обновлений через GitHub,
-- поддержкой PWA,
-- Android-вариантами сборки.
+## Как это работает
 
-## Карта документации
-- Архитектура: [docs/ARCHITECTURE.ru.md](docs/ARCHITECTURE.ru.md)
-- Структура проекта: [docs/PROJECT_STRUCTURE.ru.md](docs/PROJECT_STRUCTURE.ru.md)
-- Гайд для контрибьюторов: [CONTRIBUTING.ru.md](CONTRIBUTING.ru.md)
-- Кодекс поведения: [CODE_OF_CONDUCT.ru.md](CODE_OF_CONDUCT.ru.md)
-- Android Native (Variant B): [android_native/README.ru.md](android_native/README.ru.md)
+Приложение упаковывает Flask-сервер расписания прямо внутрь APK-файла с помощью **Chaquopy** — плагина, который встраивает полноценный Python-интерпретатор в Android-приложение.
 
-## Быстрый старт
-### Linux/macOS
+```
+┌──────────────────────────────────────────────┐
+│          Android APK (APKLife)                │
+│                                              │
+│  ┌──────────┐    ┌────────────────────────┐  │
+│  │  Kotlin   │    │  Chaquopy (Python 3.10) │  │
+│  │  WebView  │◄──►│  Flask-сервер          │  │
+│  │           │    │  127.0.0.1:5000        │  │
+│  └──────────┘    └────────────────────────┘  │
+│       ▲                    ▲                 │
+│       │                    │                 │
+│  Пользователь       it-institut.ru API       │
+└──────────────────────────────────────────────┘
+```
+
+### Порядок запуска:
+1. **Splash-экран** → Material 3 индикатор загрузки
+2. **Chaquopy** инициализирует Python 3.10 внутри APK
+3. `android_entry.py` запускает Flask на `127.0.0.1:5000`
+4. MainActivity ждёт привязки порта (TCP polling)
+5. **WebView** загружает `http://127.0.0.1:5000`
+6. Пользователь взаимодействует с расписанием как в браузере
+
+---
+
+## Требования для сборки
+
+| Инструмент | Версия |
+|---|---|
+| **Android Studio** | Hedgehog 2023.1.1+ |
+| **JDK** | 17+ |
+| **Android SDK** | API 34 (compileSdk) |
+| **Gradle** | 8.5+ (через wrapper) |
+| **Интернет** | Для загрузки Chaquopy и pip-зависимостей |
+
+> ⚠️ **Важно**: Chaquopy автоматически скачивает Python-пакеты (`flask`, `requests`, `beautifulsoup4`) при первой сборке. Это требует стабильного интернета.
+
+---
+
+## Сборка APK
+
+### Способ 1: Android Studio (рекомендуется)
+
+1. Откройте Android Studio
+2. **File → Open** → выберите папку `android_native/`
+3. Дождитесь синхронизации Gradle (может занять 3-5 минут в первый раз)
+4. **Build → Build Bundle(s) / APK(s) → Build APK(s)**
+5. APK будет в `app/build/outputs/apk/debug/app-debug.apk`
+
+### Способ 2: Командная строка
+
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements-dev.txt
-make run
+cd android_native
+
+# Debug-сборка (для тестирования)
+./gradlew assembleDebug
+
+# Release-сборка (для публикации)
+./gradlew assembleRelease
 ```
 
-### Windows (PowerShell)
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements-dev.txt
-make run
-```
+APK файл после сборки:
+- Debug: `app/build/outputs/apk/debug/app-debug.apk`
+- Release: `app/build/outputs/apk/release/app-release.apk`
 
-### Windows (CMD)
-```bat
-python -m venv .venv
-.\.venv\Scripts\activate.bat
-pip install -r requirements-dev.txt
-make run
-```
+### Способ 3: Установка напрямую на устройство
 
-Адрес приложения: `http://127.0.0.1:5000`
-
-## Основные команды
 ```bash
-make test
-make lint
+# Собрать и сразу установить на подключённый телефон
+./gradlew installDebug
 ```
 
-## Переменные окружения
-Используйте `.env.example` как шаблон.
+---
 
-Ключевые настройки:
-- Приложение: `APP_HOST`, `APP_PORT`, `APP_DEBUG`
-- Таймауты HTTP: `CONNECT_TIMEOUT_SECONDS`, `READ_TIMEOUT_SECONDS`
-- Кэш и диагностика: `CACHE_FILE`, `FAILED_HTML_DIR`, `LOGS_DIR`
-- Опциональные GitHub-проверки: `GITHUB_TOKEN`, `GITHUB_API_USER_AGENT`, `GITHUB_CONNECT_TIMEOUT_SECONDS`, `GITHUB_READ_TIMEOUT_SECONDS`
+## Особенности Android-версии
 
-## Опциональный GitHub-токен (не обязателен)
-Проверка обновлений GitHub работает в режиме **best-effort** и без токена.
+| Функция | Описание |
+|---|---|
+| 🔄 **Pull-to-refresh** | Потяните вниз для перезагрузки расписания |
+| ◀️ **Back-навигация** | Кнопка «Назад» перемещает по истории WebView |
+| 🎨 **Material Design 3** | Splash-экран, цветовая схема, индикаторы |
+| 🔌 **Offline-first** | Flask кэширует расписание локально в APK |
+| 🐍 **Встроенный Python** | Chaquopy запускает Flask без внешнего сервера |
+| 📱 **Полная автономность** | Не нужен внешний хостинг — всё внутри APK |
 
-Если нужен более высокий лимит GitHub API, задайте свой PAT локально:
-```bash
-export GITHUB_TOKEN=your_personal_token
+---
+
+## Структура проекта
+
+```
+android_native/
+├── build.gradle.kts          # Корневой Gradle (версии плагинов)
+├── settings.gradle.kts       # Настройки проекта
+├── gradle.properties         # JVM и AndroidX параметры
+└── app/
+    ├── build.gradle.kts      # Модуль app: Chaquopy, зависимости, sync-задача
+    ├── proguard-rules.pro    # Правила минификации для release
+    └── src/main/
+        ├── AndroidManifest.xml
+        ├── java/ru/apklife/app/
+        │   └── MainActivity.kt    # WebView + Chaquopy запуск Flask
+        ├── python/
+        │   └── android_entry.py   # Python entrypoint для Flask
+        └── res/
+            ├── layout/
+            │   └── activity_main.xml  # SwipeRefresh + WebView + Splash + Error
+            └── values/
+                ├── colors.xml     # MD3 цветовая палитра
+                ├── strings.xml    # Строки на русском
+                └── themes.xml     # MD3 Light тема + Splash
 ```
 
-Windows (PowerShell):
-```powershell
-$env:GITHUB_TOKEN="your_personal_token"
-```
+---
 
-Безопасность:
-- Не коммитьте секреты.
-- `.env` исключён из git.
+## FAQ
 
-## Сборка Android
-### Вариант A: Capacitor wrapper
-```bash
-python bridge.py --base-url https://example.com --debug
-python bridge.py --base-url https://example.com --release
-python bridge.py --base-url https://example.com --release --aab
-```
+**Q: Почему APK такой большой?**
+A: Chaquopy включает в APK полноценный Python 3.10 + pip-пакеты (~50-80 MB). Это необходимо для автономной работы Flask.
 
-Артефакты:
-- `android_bridge/android/app/build/outputs/apk/debug/app-debug.apk`
-- `android_bridge/android/app/build/outputs/apk/release/app-release.apk`
-- `android_bridge/android/app/build/outputs/bundle/release/app-release.aab`
+**Q: Можно ли уменьшить размер?**
+A: Уберите ненужные `abiFilters` в `build.gradle.kts`. Например, оставьте только `arm64-v8a` для современных устройств.
 
-### Вариант B: Offline Flask-in-APK
-См.: [android_native/README.ru.md](android_native/README.ru.md)
+**Q: Нужен ли интернет для работы?**
+A: Для первого получения расписания — да (данные с it-institut.ru). После этого расписание кэшируется и работает оффлайн.
 
-## Диагностика
-- Снимки HTML при проблемах схемы: `data/failed_html/`
-- Логи приложения: `logs/app.log`
-- Health endpoint: `/health`
-
-Назад к переключателю языка: [README.md](README.md)
+**Q: На каких версиях Android работает?**
+A: Android 7.0+ (API 24, minSdk).

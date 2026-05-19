@@ -1,22 +1,16 @@
-# APKLife
+# APKLife Android
 
-> Student-first schedule app with cache-first loading, offline fallback, resilient parsing, PWA mode, and Android packaging.
+📱 Нативная Android-обёртка для расписания APKLife.
 
-## 🌐 Language / Язык
-- 🇬🇧 English: [README.en.md](README.en.md)
-- 🇷🇺 Русский: [README.ru.md](README.ru.md)
+**Подробная документация:** [README.ru.md](README.ru.md)
 
-## Quick navigation
-- Architecture: [EN](docs/ARCHITECTURE.en.md) | [RU](docs/ARCHITECTURE.ru.md)
-- Project structure: [EN](docs/PROJECT_STRUCTURE.en.md) | [RU](docs/PROJECT_STRUCTURE.ru.md)
-- Contributing: [EN](CONTRIBUTING.en.md) | [RU](CONTRIBUTING.ru.md)
-- Code of Conduct: [EN](CODE_OF_CONDUCT.en.md) | [RU](CODE_OF_CONDUCT.ru.md)
-- Android Native (Variant B): [EN](android_native/README.en.md) | [RU](android_native/README.ru.md)
-- GitHub templates (bilingual):
-  - [Bug report](.github/ISSUE_TEMPLATE/bug_report.md)
-  - [Feature request](.github/ISSUE_TEMPLATE/feature_request.md)
-  - [Pull request template](.github/PULL_REQUEST_TEMPLATE.md)
+## Быстрый старт
 
----
-For full project documentation, choose your language above.
-Для полной документации проекта выберите язык выше.
+1. Откройте `android_native/` в Android Studio
+2. Дождитесь синхронизации Gradle
+3. Build → Build APK(s)
+
+## Архитектура
+
+Flask-сервер запускается локально внутри APK через Chaquopy (Python 3.10).
+WebView отображает интерфейс с `http://127.0.0.1:5000`.

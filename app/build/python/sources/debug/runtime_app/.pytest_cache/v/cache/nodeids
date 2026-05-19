@@ -1,0 +1,15 @@
+[
+  "tests/test_schedule_parser.py::test_empty_first_header_is_accepted",
+  "tests/test_schedule_parser.py::test_fallback_logic_returns_cache",
+  "tests/test_schedule_parser.py::test_no_thead_tbody_is_accepted_in_tolerant_mode",
+  "tests/test_schedule_parser.py::test_normalization_logic",
+  "tests/test_schedule_parser.py::test_parse_valid_page_success",
+  "tests/test_schedule_parser.py::test_problematic_realistic_html_is_parsed",
+  "tests/test_schedule_parser.py::test_schema_change_detection_changed_schema",
+  "tests/test_schedule_parser.py::test_schema_change_detection_invalid_table",
+  "tests/test_schedule_parser.py::test_schema_change_detection_missing_table",
+  "tests/test_schedule_parser.py::test_time_header_format_variations",
+  "tests/test_version.py::test_version_status_github_unavailable",
+  "tests/test_version.py::test_version_status_not_modified_uses_cache",
+  "tests/test_version.py::test_version_status_rate_limit_sets_next_allowed"
+]

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merger version="3"><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="main$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="E:\IDE\APKLife\android_native\app\src\main\res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="main" generated-set="main$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="E:\IDE\APKLife\android_native\app\src\main\res"><file name="activity_main" path="E:\IDE\APKLife\android_native\app\src\main\res\layout\activity_main.xml" qualifiers="" type="layout"/><file path="E:\IDE\APKLife\android_native\app\src\main\res\values\colors.xml" qualifiers=""><color name="md3_primary">#6750A4</color><color name="md3_on_primary">#FFFFFF</color><color name="md3_primary_container">#E9DDFF</color><color name="md3_on_primary_container">#21005D</color><color name="md3_secondary">#625B71</color><color name="md3_secondary_container">#E8DEF8</color><color name="md3_error">#B3261E</color><color name="md3_error_container">#F9DEDC</color><color name="md3_background">#FEF7FF</color><color name="md3_surface">#FEF7FF</color><color name="md3_on_surface">#1D1B20</color><color name="md3_on_surface_variant">#49454F</color><color name="md3_surface_container">#F3EDF7</color><color name="md3_status_bar">#FEF7FF</color></file><file path="E:\IDE\APKLife\android_native\app\src\main\res\values\strings.xml" qualifiers=""><string name="app_name">APKLife</string><string name="loading_server">Запуск расписания…</string><string name="error_title">Ошибка запуска</string><string name="error_server_failed">Не удалось запустить локальный сервер.\nПопробуйте перезапустить приложение.</string><string name="retry">Повторить</string></file><file path="E:\IDE\APKLife\android_native\app\src\main\res\values\themes.xml" qualifiers=""><style name="Theme.APKLife" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/md3_primary</item>
+        <item name="colorOnPrimary">@color/md3_on_primary</item>
+        <item name="colorPrimaryContainer">@color/md3_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/md3_on_primary_container</item>
+        <item name="colorSecondary">@color/md3_secondary</item>
+        <item name="colorSecondaryContainer">@color/md3_secondary_container</item>
+        <item name="colorError">@color/md3_error</item>
+        <item name="colorErrorContainer">@color/md3_error_container</item>
+        <item name="android:colorBackground">@color/md3_background</item>
+        <item name="colorSurface">@color/md3_surface</item>
+        <item name="colorOnSurface">@color/md3_on_surface</item>
+        <item name="colorOnSurfaceVariant">@color/md3_on_surface_variant</item>
+
+        
+        <item name="android:statusBarColor">@color/md3_status_bar</item>
+        <item name="android:navigationBarColor">@color/md3_surface_container</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style><style name="Theme.APKLife.Splash" parent="Theme.APKLife">
+        <item name="android:windowSplashScreenBackground">@color/md3_background</item>
+    </style></file></source></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="debug$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="E:\IDE\APKLife\android_native\app\src\debug\res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="debug" generated-set="debug$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="E:\IDE\APKLife\android_native\app\src\debug\res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="E:\IDE\APKLife\android_native\app\build\generated\res\resValues\debug"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated" generated-set="generated$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="E:\IDE\APKLife\android_native\app\build\generated\res\resValues\debug"/></dataSet><mergedItems/></merger>

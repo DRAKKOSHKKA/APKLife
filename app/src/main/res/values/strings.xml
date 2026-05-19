@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">APKLife</string>
+    <string name="loading_server">Запуск расписания…</string>
+    <string name="error_title">Ошибка запуска</string>
+    <string name="error_server_failed">Не удалось запустить локальный сервер.\nПопробуйте перезапустить приложение.</string>
+    <string name="retry">Повторить</string>
+</resources>
