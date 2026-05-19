@@ -376,8 +376,8 @@ class MainActivity : AppCompatActivity() {
                 updateLoadingText("Запуск Flask-сервера…")
                 val py = Python.getInstance()
                 val module = py.getModule("android_entry")
-                module.callAttr("start_server")
-                Log.i(TAG, "Flask server start_server() called")
+                module.callAttr("start_server", BuildConfig.VERSION_NAME)
+                Log.i(TAG, "Flask server start_server() called with version ${BuildConfig.VERSION_NAME}")
 
                 // Шаг 3: Ожидание готовности сервера
                 updateLoadingText("Ожидание сервера…")

@@ -26,7 +26,7 @@ def _runtime_root() -> Path:
     return Path(__file__).resolve().parent / "runtime_app"
 
 
-def start_server() -> None:
+def start_server(app_version: str = "0.1.0") -> None:
     """
     Запускает Flask-сервер один раз в фоновом daemon-потоке.
 
@@ -34,16 +34,20 @@ def start_server() -> None:
     глобальному флагу _SERVER_STARTED и мьютексу _LOCK.
 
     Шаги:
-    1. Добавляет runtime_app/ в sys.path, чтобы Python нашёл наш код
-    2. Устанавливает рабочую директорию для templates и static
-    3. Импортирует create_app() из app.py
-    4. Запускает Flask app.run() в daemon-потоке
+    1. Устанавливает версию приложения в окружение для config.py
+    2. Добавляет runtime_app/ в sys.path, чтобы Python нашёл наш код
+    3. Устанавливает рабочую директорию для templates и static
+    4. Импортирует create_app() из app.py
+    5. Запускает Flask app.run() в daemon-потоке
     """
     global _SERVER_STARTED  # noqa: PLW0603
 
     with _LOCK:
         if _SERVER_STARTED:
             return
+
+        # Прокидываем версию из Android в конфиг Python
+        os.environ["APP_VERSION"] = app_version
 
         runtime_root = _runtime_root()
 
