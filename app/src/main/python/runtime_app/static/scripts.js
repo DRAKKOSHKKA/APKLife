@@ -24,6 +24,25 @@ const offlineIndicator = document.getElementById("offline-indicator");
 // Ключ для хранения статуса режима разработчика в LocalStorage браузера
 const DEV_KEY = "devMode";
 
+function applyAndroidMd3Colors() {
+	try {
+		const source = window.Android?.getMaterialYouColors?.() || window.__MD3_COLORS__;
+		if (!source) return;
+		const colors = typeof source === "string" ? JSON.parse(source) : source;
+		Object.entries(colors).forEach(([key, value]) => {
+			if (typeof value === "string" && value.startsWith("#")) {
+				document.documentElement.style.setProperty(`--md3-${key}`, value);
+			}
+		});
+	} catch (error) {
+		console.warn("Dynamic MD3 colors unavailable:", error);
+	}
+}
+
+function applyOrientationClass() {
+	document.body.classList.toggle("is-landscape", window.matchMedia("(orientation: landscape)").matches);
+}
+
 /**
  * Функция обновления языка интерфейса.
  * Заменяет параметр "lang" в URL адресе страницы и перезагружает ее.
@@ -395,6 +414,8 @@ document.addEventListener("DOMContentLoaded", () => {
 	applyDevModeState();
 	setupDevModeUnlock();
 	registerServiceWorker();
+	applyAndroidMd3Colors();
+	applyOrientationClass();
 
 	// Устанавливаем статус оффлайна при первой загрузке
 	setOfflineIndicator((window.__SERVER_STATE__ && window.__SERVER_STATE__.offline) || !navigator.onLine);
@@ -402,6 +423,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	// Слушаем события изменения статуса сети браузера
 	window.addEventListener("online", () => setOfflineIndicator(false));
 	window.addEventListener("offline", () => setOfflineIndicator(true));
+	window.addEventListener("resize", applyOrientationClass);
 
 	// Запускаем фоновые оптимизации
 	void refreshScheduleInBackground();
