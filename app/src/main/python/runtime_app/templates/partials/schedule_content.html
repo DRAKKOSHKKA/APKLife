@@ -20,7 +20,7 @@
 			<li class="list-group-item lesson-item">
 				{% if lesson_list %}
 					{% for lesson in lesson_list %}
-					<div class="lesson {% if lesson_list|length > 1 %}multiple-lesson{% endif %} {% if not lesson.subject %}empty-lesson{% if 'Сб' in day or 'Вс' in day %} weekend-empty{% endif %}{% endif %}">
+					<div class="lesson {% if lesson.is_current %}current-lesson{% endif %} {% if lesson_list|length > 1 %}multiple-lesson{% endif %} {% if not lesson.subject %}empty-lesson{% if 'Сб' in day or 'Вс' in day %} weekend-empty{% endif %}{% endif %}">
 						<div class="lesson-content">
 							{% if lesson.time %}
 							<div class="time"><i class="bi bi-clock"></i>{% if lesson_list|length > 1 %}<small> #{{ loop.index }}:</small>{% endif %} {{ lesson.time }}</div>

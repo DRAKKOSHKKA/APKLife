@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import datetime
+from datetime import timezone, timedelta
 from typing import Any
 
 from services.cache_store import build_cache_key, get_schedule_cache
@@ -99,6 +100,59 @@ def detect_active_day(schedule: dict[str, Any], day_param: str | None) -> str | 
     return next(iter(schedule))
 
 
+def mark_current_lessons(schedule: dict[str, Any], active_day: str | None, test_time: str | None = None):
+    """
+    Помечает уроки, которые идут в данный момент (МСК).
+    Поддерживает параметр test_time в формате 'ЧЧ:ММ' для отладки.
+    """
+    if not active_day or not schedule.get(active_day):
+        return
+
+    # MSK is UTC+3
+    now_msk = datetime.datetime.now(timezone(timedelta(hours=3)))
+
+    if test_time:
+        try:
+            h, m = map(int, test_time.split(":"))
+            current_time_minutes = h * 60 + m
+        except Exception:
+            current_time_minutes = now_msk.hour * 60 + now_msk.minute
+    else:
+        current_time_minutes = now_msk.hour * 60 + now_msk.minute
+
+    # Проверяем, совпадает ли активный день с сегодняшним (по МСК)
+    weekday = now_msk.weekday()
+    ru_days = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
+    today_short = ru_days[weekday]
+
+    # Если мы не в режиме тестирования, то подсвечиваем только сегодня
+    if not test_time and not active_day.startswith(today_short):
+        return
+
+    for lesson_list in schedule[active_day]:
+        for lesson in lesson_list:
+            time_range = lesson.get("time")
+            if not time_range:
+                continue
+
+            try:
+                # Очистка и парсинг диапазона типа "08:30-10:00"
+                parts = time_range.replace(" ", "").replace(".", ":").replace("–", "-").split("-")
+                if len(parts) != 2:
+                    continue
+
+                sh, sm = map(int, parts[0].split(":"))
+                eh, em = map(int, parts[1].split(":"))
+
+                start_m = sh * 60 + sm
+                end_m = eh * 60 + em
+
+                if start_m <= current_time_minutes < end_m:
+                    lesson["is_current"] = True
+            except Exception:
+                continue
+
+
 def _resolve_entity(group_name: str):
     """
     Вспомогательная функция для разрешения имени группы в метаданные.
@@ -181,6 +235,10 @@ def load_schedule_context(args):
 
     # Определяем активный день и оставляем в расписании только его (для чистой верстки)
     active_day = detect_active_day(schedule, day)
+
+    # Помечаем текущие уроки (Feature: Lesson Highlighting)
+    mark_current_lessons(schedule, active_day, args.get("test_time"))
+
     if active_day:
         schedule = {active_day: schedule[active_day]}
 
@@ -246,6 +304,10 @@ def force_refresh_context(args):
         )
 
     active_day = detect_active_day(schedule, args.get("day"))
+
+    # Помечаем текущие уроки (Feature: Lesson Highlighting)
+    mark_current_lessons(schedule, active_day, args.get("test_time"))
+
     if active_day:
         schedule = {active_day: schedule[active_day]}
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import subprocess
 from datetime import datetime, timedelta, timezone
+from time import perf_counter
 
 from services.config import settings
 from services.http_client import http_client
@@ -189,18 +190,19 @@ def _fetch_latest_release() -> tuple[str | None, bool, str | None]:
     return None, False, None
 
 
-def _compose_status_text(local_commit: str | None, remote_commit: str | None, failed: bool) -> str:
-    if local_commit and remote_commit:
-        return (
-            "Доступно обновление из GitHub."
-            if local_commit != remote_commit
-            else "Установлена актуальная версия из GitHub."
-        )
-    if local_commit and failed:
+def _compose_status_text(local_version: str, latest_release: str | None, failed: bool) -> str:
+    if latest_release:
+        # Убираем 'v' из тега если есть (v1.0.0 -> 1.0.0)
+        clean_latest = latest_release.lstrip('v')
+        clean_local = local_version.lstrip('v')
+
+        if clean_latest != clean_local:
+            return f"Доступна новая версия: {latest_release}. У вас установлена {local_version}."
+        return "Установлена актуальная версия."
+
+    if failed:
         return "Не удалось проверить обновления (сеть/лимит)."
-    if local_commit:
-        return "Локальная версия определена, но данные GitHub временно недоступны."
-    return "Версия локального приложения не определена (git не найден или не репозиторий)."
+    return f"Текущая версия: {local_version}. Данные GitHub временно недоступны."
 
 
 def get_version_status() -> dict[str, object]:
@@ -209,63 +211,59 @@ def get_version_status() -> dict[str, object]:
     if not isinstance(cached_data, dict):
         cached_data = {}
 
+    local_version = settings.app_version
     expires_at = _CACHE.get("expires_at")
+
     if isinstance(expires_at, datetime) and now < expires_at:
         return cached_data
 
     next_allowed = _CACHE.get("next_allowed_check_at")
     if isinstance(next_allowed, datetime) and now < next_allowed:
-        local_commit = _get_local_commit()
         data = {
             **cached_data,
-            "local_commit": local_commit,
+            "local_version": local_version,
             "is_update_available": bool(
-                local_commit
-                and isinstance(cached_data.get("remote_commit"), str)
-                and local_commit != cached_data.get("remote_commit")
+                isinstance(cached_data.get("latest_release"), str)
+                and local_version.lstrip('v') != str(cached_data.get("latest_release")).lstrip('v')
             ),
-            "status_text": "Не удалось проверить обновления (сеть/лимит).",
+            "status_text": "Ожидание следующей попытки проверки...",
             "last_checked_at": now.isoformat(timespec="seconds"),
         }
         _CACHE["data"] = data
-        _CACHE["expires_at"] = now + _CACHE_TTL
         return data
 
-    local_commit = _get_local_commit()
     had_failure = False
     rate_limit_message: str | None = None
 
     try:
-        remote_commit, commit_from_cache, commit_message = _fetch_remote_commit()
         latest_release, release_from_cache, release_message = _fetch_latest_release()
 
-        if commit_message:
-            rate_limit_message = commit_message
         if release_message:
             rate_limit_message = release_message
 
-        if remote_commit is None and not commit_from_cache:
-            had_failure = True
         if latest_release is None and not release_from_cache:
             had_failure = True
 
         if had_failure and not rate_limit_message:
-            _set_failure_backoff("github_partial_failure")
+            _set_failure_backoff("github_api_failure")
         elif not had_failure:
             _set_success()
 
         status_text = rate_limit_message or _compose_status_text(
-            local_commit, remote_commit, had_failure
+            local_version, latest_release, had_failure
         )
+
+        is_update_available = False
+        if latest_release:
+            is_update_available = latest_release.lstrip('v') != local_version.lstrip('v')
+
         data = {
-            "local_commit": local_commit,
-            "remote_commit": remote_commit,
+            "local_version": local_version,
             "latest_release": latest_release,
-            "is_update_available": bool(
-                local_commit and remote_commit and local_commit != remote_commit
-            ),
+            "is_update_available": is_update_available,
             "status_text": status_text,
             "last_checked_at": now.isoformat(timespec="seconds"),
+            "release_url": "https://github.com/DRAKKOSHKKA/APKLife/releases/latest"
         }
         _CACHE["data"] = data
         _CACHE["expires_at"] = now + _CACHE_TTL
@@ -274,11 +272,10 @@ def get_version_status() -> dict[str, object]:
         logger.exception("unexpected_version_check_failure")
         _set_failure_backoff("unexpected_exception")
         data = {
-            "local_commit": local_commit,
-            "remote_commit": None,
+            "local_version": local_version,
             "latest_release": None,
             "is_update_available": False,
-            "status_text": "Не удалось проверить обновления (сеть/лимит).",
+            "status_text": "Ошибка при проверке обновлений.",
             "last_checked_at": now.isoformat(timespec="seconds"),
         }
         _CACHE["data"] = data

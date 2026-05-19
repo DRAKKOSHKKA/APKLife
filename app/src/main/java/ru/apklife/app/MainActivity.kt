@@ -2,14 +2,16 @@ package ru.apklife.app
 
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
-import android.net.Uri
+import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
+import android.view.animation.OvershootInterpolator
 import android.webkit.ConsoleMessage
+import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
@@ -21,12 +23,19 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.dynamicanimation.animation.DynamicAnimation
+import androidx.dynamicanimation.animation.SpringAnimation
+import androidx.dynamicanimation.animation.SpringForce
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
 import com.google.android.material.button.MaterialButton
 import java.net.InetSocketAddress
 import java.net.Socket
+import com.google.android.material.color.DynamicColors
+import com.google.android.material.color.MaterialColors
+import ru.apklife.app.UpdateChecker
+import ru.apklife.app.BuildConfig
 
 /**
  * MainActivity — единственная Activity приложения APKLife для Android.
@@ -63,11 +72,15 @@ class MainActivity : AppCompatActivity() {
     // UI-элементы
     private lateinit var webView: WebView
     private lateinit var swipeRefresh: SwipeRefreshLayout
-    private lateinit var splashOverlay: LinearLayout
-    private lateinit var errorOverlay: LinearLayout
+    private lateinit var splashOverlay: View
+    private lateinit var errorOverlay: View
     private lateinit var errorMessage: TextView
     private lateinit var loadingText: TextView
     private lateinit var retryButton: MaterialButton
+    private lateinit var pulseView: View
+
+    // SharedPreferences для хранения настроек
+    private val prefs by lazy { getSharedPreferences("settings", MODE_PRIVATE) }
 
     // Хэндлер для работы с UI-потоком из фоновых задач
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -80,9 +93,14 @@ class MainActivity : AppCompatActivity() {
     // -------------------------------------------------------------------------
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        DynamicColors.applyToActivityIfAvailable(this)
+
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_main)
+
+        val swipeRefresh = findViewById<SwipeRefreshLayout>(R.id.swipeRefresh)
+        swipeRefresh.isEnabled = false
 
         WindowCompat.setDecorFitsSystemWindows(window, true)
 
@@ -100,14 +118,89 @@ class MainActivity : AppCompatActivity() {
         // Настраиваем pull-to-refresh
         configureSwipeRefresh()
 
+        startPulseAnimation()
+
+        // Проверка обновлений
+        checkForUpdates()
+
         // Настраиваем кнопку "Повторить" на экране ошибки
         retryButton.setOnClickListener {
-            showSplash()
-            startFlaskServer()
+            // Bouncy click animation
+            val scaleXAnim = SpringAnimation(retryButton, DynamicAnimation.SCALE_X, 0.9f).apply {
+                spring.dampingRatio = SpringForce.DAMPING_RATIO_HIGH_BOUNCY
+                spring.stiffness = SpringForce.STIFFNESS_VERY_LOW
+            }
+            val scaleYAnim = SpringAnimation(retryButton, DynamicAnimation.SCALE_Y, 0.9f).apply {
+                spring.dampingRatio = SpringForce.DAMPING_RATIO_HIGH_BOUNCY
+                spring.stiffness = SpringForce.STIFFNESS_VERY_LOW
+            }
+            
+            scaleXAnim.addEndListener { _, _, _, _ ->
+                SpringAnimation(retryButton, DynamicAnimation.SCALE_X, 1.0f).start()
+                SpringAnimation(retryButton, DynamicAnimation.SCALE_Y, 1.0f).start()
+                
+                showSplash()
+                startFlaskServer()
+            }
+            
+            scaleXAnim.start()
+            scaleYAnim.start()
         }
+
+        // Восстанавливаем сохраненный язык при запуске
+        val savedLang = prefs.getString("lang", "ru") ?: "ru"
 
         // Запускаем Flask-сервер в фоне
         startFlaskServer()
+    }
+
+    private fun getThemeJson(): String {
+        val isDark = (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
+        val colorAttrMap = mapOf(
+            "primary" to com.google.android.material.R.attr.colorPrimary,
+            "onPrimary" to com.google.android.material.R.attr.colorOnPrimary,
+            "primaryContainer" to com.google.android.material.R.attr.colorPrimaryContainer,
+            "onPrimaryContainer" to com.google.android.material.R.attr.colorOnPrimaryContainer,
+            "secondary" to com.google.android.material.R.attr.colorSecondary,
+            "onSecondary" to com.google.android.material.R.attr.colorOnSecondary,
+            "secondaryContainer" to com.google.android.material.R.attr.colorSecondaryContainer,
+            "onSecondaryContainer" to com.google.android.material.R.attr.colorOnSecondaryContainer,
+            "tertiary" to com.google.android.material.R.attr.colorTertiary,
+            "onTertiary" to com.google.android.material.R.attr.colorOnTertiary,
+            "tertiaryContainer" to com.google.android.material.R.attr.colorTertiaryContainer,
+            "onTertiaryContainer" to com.google.android.material.R.attr.colorOnTertiaryContainer,
+            "error" to com.google.android.material.R.attr.colorError,
+            "onError" to com.google.android.material.R.attr.colorOnError,
+            "errorContainer" to com.google.android.material.R.attr.colorErrorContainer,
+            "onErrorContainer" to com.google.android.material.R.attr.colorOnErrorContainer,
+            "outline" to com.google.android.material.R.attr.colorOutline,
+            "outlineVariant" to com.google.android.material.R.attr.colorOutlineVariant,
+            "surface" to com.google.android.material.R.attr.colorSurface,
+            "onSurface" to com.google.android.material.R.attr.colorOnSurface,
+            "surfaceVariant" to com.google.android.material.R.attr.colorSurfaceVariant,
+            "onSurfaceVariant" to com.google.android.material.R.attr.colorOnSurfaceVariant,
+            "surfaceContainerLowest" to com.google.android.material.R.attr.colorSurfaceContainerLowest,
+            "surfaceContainerLow" to com.google.android.material.R.attr.colorSurfaceContainerLow,
+            "surfaceContainer" to com.google.android.material.R.attr.colorSurfaceContainer,
+            "surfaceContainerHigh" to com.google.android.material.R.attr.colorSurfaceContainerHigh,
+            "surfaceContainerHighest" to com.google.android.material.R.attr.colorSurfaceContainerHighest
+        )
+
+        val jsonObj = org.json.JSONObject()
+        colorAttrMap.forEach { (name, attr) ->
+            val color = MaterialColors.getColor(this, attr, Color.BLACK)
+            jsonObj.put("--md3-$name", String.format("#%06X", (0xFFFFFF and color)))
+        }
+        val bgColor = MaterialColors.getColor(this, android.R.attr.colorBackground, Color.WHITE)
+        jsonObj.put("--md3-background", String.format("#%06X", (0xFFFFFF and bgColor)))
+        jsonObj.put("--is-dark", isDark)
+        return jsonObj.toString()
+    }
+
+    private fun sendThemeToWeb() {
+        val json = getThemeJson()
+        val js = "if (window.applyTheme) { window.applyTheme($json); } else { window.__PENDING_THEME__ = $json; }"
+        webView.evaluateJavascript(js, null)
     }
 
     /**
@@ -136,6 +229,7 @@ class MainActivity : AppCompatActivity() {
         errorMessage = findViewById(R.id.errorMessage)
         loadingText = findViewById(R.id.loadingText)
         retryButton = findViewById(R.id.retryButton)
+        pulseView = findViewById(R.id.pulseView)
     }
 
     /**
@@ -150,6 +244,8 @@ class MainActivity : AppCompatActivity() {
      */
     @SuppressLint("SetJavaScriptEnabled")
     private fun configureWebView() {
+        swipeRefresh.isEnabled = false
+        
         webView.settings.apply {
             javaScriptEnabled = true
             domStorageEnabled = true
@@ -160,10 +256,18 @@ class MainActivity : AppCompatActivity() {
             loadWithOverviewMode = true
             useWideViewPort = true
             allowContentAccess = true
-
-            // Кастомный User-Agent помогает серверу узнать, что запрос идёт из Android-версии
             userAgentString = "$userAgentString APKLife-Android/1.0"
         }
+        
+        // Добавляем интерфейс для получения темы из JS
+        webView.addJavascriptInterface(object {
+            @JavascriptInterface
+            fun getTheme(): String {
+                return getThemeJson()
+            }
+        }, "AndroidTheme")
+
+        webView.overScrollMode = View.OVER_SCROLL_NEVER
 
         // WebViewClient — перехватываем навигацию, чтобы все ссылки открывались внутри приложения
         webView.webViewClient = object : WebViewClient() {
@@ -179,6 +283,9 @@ class MainActivity : AppCompatActivity() {
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
                 swipeRefresh.isRefreshing = false
+                
+                // При каждой загрузке страницы отправляем тему
+                sendThemeToWeb()
 
                 // Если это первая успешная загрузка — прячем splash
                 if (!serverReady) {
@@ -327,25 +434,11 @@ class MainActivity : AppCompatActivity() {
     // UI: управление overlay-экранами
     // -------------------------------------------------------------------------
 
-    /** Показать splash-overlay (скрыть ошибку и WebView) */
     private fun showSplash() {
         splashOverlay.visibility = View.VISIBLE
         errorOverlay.visibility = View.GONE
         webView.visibility = View.INVISIBLE
-    }
-
-    /** Плавно убрать splash-overlay с анимацией fade-out */
-    private fun hideSplashWithAnimation() {
-        splashOverlay.animate()
-            .alpha(0f)
-            .setDuration(400)
-            .setInterpolator(AccelerateDecelerateInterpolator())
-            .withEndAction {
-                splashOverlay.visibility = View.GONE
-                splashOverlay.alpha = 1f
-                webView.visibility = View.VISIBLE
-            }
-            .start()
+        startPulseAnimation()
     }
 
     /** Показать экран ошибки с сообщением */
@@ -361,5 +454,83 @@ class MainActivity : AppCompatActivity() {
         mainHandler.post {
             loadingText.text = text
         }
+    }
+
+    private fun checkForUpdates() {
+        val updateChecker = UpdateChecker(this)
+        updateChecker.checkForUpdates(BuildConfig.VERSION_NAME, object : UpdateChecker.UpdateCallback {
+            override fun onUpdateAvailable(latestVersion: String, downloadUrl: String) {
+                mainHandler.post {
+                    updateChecker.showUpdateDialog(latestVersion, downloadUrl)
+                }
+            }
+
+            override fun onNoUpdate() {
+                Log.i(TAG, "No updates available")
+            }
+
+            override fun onError(e: Exception) {
+                Log.e(TAG, "Error checking for updates", e)
+            }
+        })
+    }
+
+    private fun startPulseAnimation() {
+        // Expressive spring animation for the pulse effect
+        val scaleXAnim = SpringAnimation(pulseView, DynamicAnimation.SCALE_X, 1.5f).apply {
+            spring = SpringForce().apply {
+                dampingRatio = SpringForce.DAMPING_RATIO_MEDIUM_BOUNCY
+                stiffness = SpringForce.STIFFNESS_LOW
+                finalPosition = 1.5f
+            }
+        }
+        val scaleYAnim = SpringAnimation(pulseView, DynamicAnimation.SCALE_Y, 1.5f).apply {
+            spring = SpringForce().apply {
+                dampingRatio = SpringForce.DAMPING_RATIO_MEDIUM_BOUNCY
+                stiffness = SpringForce.STIFFNESS_LOW
+                finalPosition = 1.5f
+            }
+        }
+        val alphaAnim = pulseView.animate().alpha(0f).setDuration(1000)
+
+        scaleXAnim.addEndListener { _, _, _, _ ->
+            pulseView.postDelayed({
+                pulseView.scaleX = 1f
+                pulseView.scaleY = 1f
+                pulseView.alpha = 0.6f
+                if (splashOverlay.visibility == View.VISIBLE) {
+                    startPulseAnimation()
+                }
+            }, 100)
+        }
+
+        scaleXAnim.start()
+        scaleYAnim.start()
+        alphaAnim.start()
+    }
+
+    /** Плавно убрать splash-overlay с анимацией fade-out и небольшим scale-up */
+    private fun hideSplashWithAnimation() {
+        splashOverlay.animate()
+            .alpha(0f)
+            .scaleX(1.1f)
+            .scaleY(1.1f)
+            .setDuration(600)
+            .setInterpolator(OvershootInterpolator())
+            .withEndAction {
+                splashOverlay.visibility = View.GONE
+                splashOverlay.alpha = 1f
+                splashOverlay.scaleX = 1f
+                splashOverlay.scaleY = 1f
+                webView.visibility = View.VISIBLE
+                
+                // Анимация появления WebView
+                webView.alpha = 0f
+                webView.animate()
+                    .alpha(1f)
+                    .setDuration(400)
+                    .start()
+            }
+            .start()
     }
 }

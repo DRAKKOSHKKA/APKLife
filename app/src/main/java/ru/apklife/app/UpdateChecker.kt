@@ -16,6 +16,20 @@ class UpdateChecker(private val context: Context) {
         private const val TAG = "UpdateChecker"
         private const val REPO_URL = "https://api.github.com/repos/DRAKKOSHKKA/APKLife/releases"
         private const val DOWNLOAD_URL = "https://github.com/DRAKKOSHKKA/APKLife/releases"
+
+        internal fun isNewerVersion(current: String, latest: String): Boolean {
+            val currentParts = current.split(".").map { it.toIntOrNull() ?: 0 }
+            val latestParts = latest.split(".").map { it.toIntOrNull() ?: 0 }
+            
+            val length = maxOf(currentParts.size, latestParts.size)
+            for (i in 0 until length) {
+                val curr = if (i < currentParts.size) currentParts[i] else 0
+                val lat = if (i < latestParts.size) latestParts[i] else 0
+                if (lat > curr) return true
+                if (lat < curr) return false
+            }
+            return false
+        }
     }
 
     interface UpdateCallback {
@@ -46,7 +60,7 @@ class UpdateChecker(private val context: Context) {
                         val latestRelease = releases.getJSONObject(0)
                         val latestVersion = latestRelease.getString("tag_name").replace("v", "")
                         
-                        if (isNewerVersion(currentVersion, latestVersion)) {
+                        if (UpdateChecker.isNewerVersion(currentVersion, latestVersion)) {
                             callback.onUpdateAvailable(latestVersion, DOWNLOAD_URL)
                         } else {
                             callback.onNoUpdate()
@@ -62,20 +76,6 @@ class UpdateChecker(private val context: Context) {
                 callback.onError(e)
             }
         }.start()
-    }
-
-    private fun isNewerVersion(current: String, latest: String): Boolean {
-        val currentParts = current.split(".").map { it.toIntOrNull() ?: 0 }
-        val latestParts = latest.split(".").map { it.toIntOrNull() ?: 0 }
-        
-        val length = maxOf(currentParts.size, latestParts.size)
-        for (i in 0 until length) {
-            val curr = if (i < currentParts.size) currentParts[i] else 0
-            val lat = if (i < latestParts.size) latestParts[i] else 0
-            if (lat > curr) return true
-            if (lat < curr) return false
-        }
-        return false
     }
 
     fun showUpdateDialog(latestVersion: String, downloadUrl: String) {

@@ -13,12 +13,17 @@
 // Получаем ссылки на HTML-элементы диалоговых окон
 const modalInfo = document.getElementById("modalInfo");
 const modalSettings = document.getElementById("modalSettings");
+const modalStatus = document.getElementById("modalStatus");
+const modalUpdate = document.getElementById("modalUpdate");
 
 // Получаем кнопки для открытия/закрытия диалоговых окон
 const openInfoBtn = document.getElementById("openModalInfo");
 const closeInfoBtn = document.getElementById("closeModalInfo");
 const openSettingsBtn = document.getElementById("openModalSettings");
 const closeSettingsBtn = document.getElementById("closeModalSettings");
+const openStatusBtn = document.getElementById("openModalStatus");
+const closeStatusBtn = document.getElementById("closeModalStatus");
+const closeUpdateBtn = document.getElementById("closeModalUpdate");
 const offlineIndicator = document.getElementById("offline-indicator");
 
 // Ключ для хранения статуса режима разработчика в LocalStorage браузера
@@ -29,6 +34,7 @@ const DEV_KEY = "devMode";
  * Заменяет параметр "lang" в URL адресе страницы и перезагружает ее.
  */
 function updateLanguage(lang) {
+	localStorage.setItem("lang", lang);
 	const url = new URL(window.location.href);
 	url.searchParams.set("lang", lang);
 	window.location.href = url.toString();
@@ -100,44 +106,34 @@ async function loadLogs() {
  * Универсальные функции для открытия и закрытия модальных диалогов (MD3 Dialogs).
  * Они также управляют классом 'active', чтобы подсветить активную вкладку в меню (активные пилюли).
  */
-function showModal(modal, btnMobile, btnDesktop) {
+function showModal(modal, btnMobile) {
 	if (!modal) return;
 	modal.style.display = "block";
 	if (btnMobile) btnMobile.classList.add("active");
-	if (btnDesktop) btnDesktop.classList.add("active");
+    document.body.dataset.isModalOpen = "true";
 }
 
 /**
  * Закрывает модальное окно.
  */
-function hideModal(modal, btnMobile, btnDesktop) {
+function hideModal(modal, btnMobile) {
 	if (!modal) return;
 	modal.style.display = "none";
 	if (btnMobile) btnMobile.classList.remove("active");
-	if (btnDesktop) btnDesktop.classList.remove("active");
+    document.body.dataset.isModalOpen = "false";
 }
-
-// Получаем кнопки для десктопной боковой панели
-const openInfoDeskBtn = document.getElementById("openModalInfoDesk");
-const openSettingsDeskBtn = document.getElementById("openModalSettingsDesk");
 
 // Привязываем обработчики клика для открытия/закрытия диалога "О проекте"
 if (openInfoBtn && modalInfo) {
 	openInfoBtn.onclick = (event) => {
 		event.preventDefault();
-		showModal(modalInfo, openInfoBtn, openInfoDeskBtn);
-	};
-}
-if (openInfoDeskBtn && modalInfo) {
-	openInfoDeskBtn.onclick = (event) => {
-		event.preventDefault();
-		showModal(modalInfo, openInfoBtn, openInfoDeskBtn);
+		showModal(modalInfo, openInfoBtn);
 	};
 }
 
 if (closeInfoBtn && modalInfo) {
 	closeInfoBtn.onclick = () => {
-		hideModal(modalInfo, openInfoBtn, openInfoDeskBtn);
+		hideModal(modalInfo, openInfoBtn);
 	};
 }
 
@@ -145,33 +141,70 @@ if (closeInfoBtn && modalInfo) {
 if (openSettingsBtn && modalSettings) {
 	openSettingsBtn.onclick = async (event) => {
 		event.preventDefault();
-		showModal(modalSettings, openSettingsBtn, openSettingsDeskBtn);
-		await loadDevData();
-	};
-}
-if (openSettingsDeskBtn && modalSettings) {
-	openSettingsDeskBtn.onclick = async (event) => {
-		event.preventDefault();
-		showModal(modalSettings, openSettingsBtn, openSettingsDeskBtn);
+		showModal(modalSettings, openSettingsBtn);
 		await loadDevData();
 	};
 }
 
 if (closeSettingsBtn && modalSettings) {
 	closeSettingsBtn.onclick = () => {
-		hideModal(modalSettings, openSettingsBtn, openSettingsDeskBtn);
+		hideModal(modalSettings, openSettingsBtn);
 	};
+}
+
+// Привязываем обработчики клика для открытия/закрытия диалога "Статус"
+if (openStatusBtn && modalStatus) {
+    openStatusBtn.onclick = (event) => {
+        event.preventDefault();
+        showModal(modalStatus, openStatusBtn);
+    };
+}
+
+if (closeStatusBtn && modalStatus) {
+    closeStatusBtn.onclick = () => {
+        hideModal(modalStatus, openStatusBtn);
+    };
+}
+
+if (closeUpdateBtn && modalUpdate) {
+    closeUpdateBtn.onclick = () => {
+        hideModal(modalUpdate);
+    };
 }
 
 // Закрытие модалок при клике на полупрозрачный фон снаружи диалога
 window.addEventListener("click", (event) => {
 	if (modalInfo && event.target === modalInfo) {
-		hideModal(modalInfo, openInfoBtn, openInfoDeskBtn);
+		hideModal(modalInfo, openInfoBtn);
 	}
 	if (modalSettings && event.target === modalSettings) {
-		hideModal(modalSettings, openSettingsBtn, openSettingsDeskBtn);
+		hideModal(modalSettings, openSettingsBtn);
 	}
+    if (modalStatus && event.target === modalStatus) {
+        hideModal(modalStatus, openStatusBtn);
+    }
+    if (modalUpdate && event.target === modalUpdate) {
+        hideModal(modalUpdate);
+    }
 });
+
+/**
+ * Проверка обновлений через GitHub API (через наш прокси-роут)
+ */
+async function checkUpdates() {
+    try {
+        const response = await fetch("/version");
+        const data = await response.json();
+
+        if (data.is_update_available) {
+            const statusText = document.getElementById("update-status-text");
+            if (statusText) statusText.textContent = data.status_text;
+            showModal(modalUpdate);
+        }
+    } catch (error) {
+        console.warn("Update check failed:", error);
+    }
+}
 
 /**
  * Асинхронное фоновое обновление расписания.
@@ -406,6 +439,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	// Запускаем фоновые оптимизации
 	void refreshScheduleInBackground();
 	void prefetchNeighborWeeks();
+    void checkUpdates();
 
 	// Загружаем список групп для автодополнения (поисковые предложения)
 	fetch("/static/suggestions.json")

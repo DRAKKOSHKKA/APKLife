@@ -8,6 +8,10 @@ android {
     namespace = "ru.apklife.app"
     compileSdk = 34
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "ru.apklife.app"
         minSdk = 24
@@ -70,6 +74,9 @@ dependencies {
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
     implementation("androidx.core:core-splashscreen:1.0.1")
     implementation("androidx.webkit:webkit:1.11.0")
+    implementation("androidx.dynamicanimation:dynamicanimation-ktx:1.0.0-alpha03")
+
+    testImplementation("junit:junit:4.13.2")
 }
 
 // Задача: копирование Python-кода Flask-приложения в assets Chaquopy

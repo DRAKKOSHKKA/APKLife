@@ -1,49 +1,53 @@
 {% extends "base.html" %}
+
 {% block header %}
-<div class="schedule-header-card p-3 mb-3">
-	<!-- Top row: Left back button, Center Title, Right Actions -->
-	<div class="d-flex align-items-center justify-content-between header-top-row">
-		<!-- Left: back to search -->
-		<a href="/?lang={{ lang }}" class="header-action-btn" title="{{ t('back') }}" aria-label="{{ t('back') }}">
-			<i class="bi bi-arrow-left-short"></i>
-		</a>
-		
-		<!-- Center: group title -->
-		<div class="text-center flex-grow-1 header-center-info">
-			<h4 class="m-0 schedule-title">{{ group_info.SearchString }}</h4>
-		</div>
-		
-		<!-- Right: force network refresh -->
-		<a href="/group/?group_name={{ group_info.SearchString|urlencode }}{% if week_id is not none %}&week_id={{ week_id }}{% endif %}{% if active_day %}&day={{ active_day.split(' ')[0] }}{% endif %}&force_refresh=1&lang={{ lang }}" class="header-action-btn" title="{{ t('refresh_schedule') }}" aria-label="{{ t('refresh_schedule') }}">
-			<i class="bi bi-arrow-clockwise"></i>
-		</a>
-	</div>
+<div class="md3-top-app-bar">
+    <div class="app-bar-container">
+        <a href="/?lang={{ lang }}" class="app-bar-action" title="{{ t('back') }}">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div class="app-bar-title-wrapper">
+            <h1 class="app-bar-title">{{ group_info.SearchString }}</h1>
+        </div>
+        <div class="app-bar-actions">
+            <a href="#" id="openModalSettings" class="app-bar-action" title="{{ t('settings') }}">
+                <i class="bi bi-gear"></i>
+            </a>
+            <a href="#" id="openModalInfo" class="app-bar-action" title="{{ t('info') }}">
+                <i class="bi bi-info-circle"></i>
+            </a>
+        </div>
+    </div>
 
-	<!-- Week pagination bar: Centralized week number between arrows -->
-	<div class="d-flex align-items-center justify-content-between mt-3 week-pagination-bar p-1">
-		<a href="/group/?group_name={{ group_info.SearchString|urlencode }}{% if prev_week_id is not none %}&week_id={{ prev_week_id }}{% endif %}&lang={{ lang }}" class="pagination-btn {% if not prev_week_id %}disabled{% endif %}" aria-label="Предыдущая неделя">
-			<i class="bi bi-chevron-left"></i>
-		</a>
-		<span class="pagination-label text-primary fw-bold d-flex align-items-center">
-			<i class="bi bi-calendar-week-fill me-1"></i>{{ t('week') }} {{ week_number_display }}
-		</span>
-		<a href="/group/?group_name={{ group_info.SearchString|urlencode }}{% if next_week_id is not none %}&week_id={{ next_week_id }}{% endif %}&lang={{ lang }}" class="pagination-btn {% if not next_week_id %}disabled{% endif %}" aria-label="Следующая неделя">
-			<i class="bi bi-chevron-right"></i>
-		</a>
-	</div>
+    <div class="unified-nav-container">
+        <div class="week-navigation">
+            <div class="week-pagination-row">
+                <a href="/group/?group_name={{ group_info.SearchString|urlencode }}{% if prev_week_id is not none %}&week_id={{ prev_week_id }}{% endif %}&lang={{ lang }}"
+                   class="week-nav-btn {% if not prev_week_id %}disabled{% endif %}">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+                <span class="week-label">{{ t('week') }} {{ week_number_display }}</span>
+                <a href="/group/?group_name={{ group_info.SearchString|urlencode }}{% if next_week_id is not none %}&week_id={{ next_week_id }}{% endif %}&lang={{ lang }}"
+                   class="week-nav-btn {% if not next_week_id %}disabled{% endif %}">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </div>
 
-	<!-- Days navigation chips -->
-	<div class="day-nav d-flex justify-content-between flex-wrap mt-3 gap-1">
-		{% for day in days_list %}
-		<a href="/group/?group_name={{ group_info.SearchString|urlencode }}{% if week_id is not none %}&week_id={{ week_id }}{% endif %}&day={{ day.split(' ')[0] }}&lang={{ lang }}" class="day-chip-btn {% if active_day and day.split(' ')[0] == active_day.split(' ')[0] %}active{% endif %}">
-			<span class="day-chip-label">{{ day.split(" ")[1].split(".")[0] }}</span>
-		</a>
-		{% endfor %}
-	</div>
+            <div class="day-chips-container">
+                {% for day in days_list %}
+                <a href="/group/?group_name={{ group_info.SearchString|urlencode }}{% if week_id is not none %}&week_id={{ week_id }}{% endif %}&day={{ day.split(' ')[0] }}&lang={{ lang }}"
+                   class="day-chip {% if active_day and day.split(' ')[0] == active_day.split(' ')[0] %}active{% endif %}">
+                    {{ day.split(" ")[1].split(".")[0] }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
 {% block content %}
+<div class="content-spacer"></div>
 <div id="schedule-content" data-refresh-url="/group/refresh?group_name={{ group_info.SearchString|urlencode }}{% if week_id is not none %}&week_id={{ week_id }}{% endif %}{% if active_day %}&day={{ active_day.split(' ')[0] }}{% endif %}&lang={{ lang }}">
 	{% include "partials/schedule_content.html" %}
 </div>

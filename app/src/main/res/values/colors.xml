@@ -21,6 +21,7 @@
     <color name="md3_on_surface">#1D1B20</color>
     <color name="md3_on_surface_variant">#49454F</color>
     <color name="md3_surface_container">#F3EDF7</color>
+    <color name="md3_outline">#79747E</color>
 
     <!-- Status bar / Nav bar -->
     <color name="md3_status_bar">#FEF7FF</color>

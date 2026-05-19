@@ -25,37 +25,78 @@
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     <!-- Splash / Loading overlay — показывается пока Flask стартует -->
-    <LinearLayout
+    <RelativeLayout
         android:id="@+id/splashOverlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/md3_background"
-        android:gravity="center"
-        android:orientation="vertical"
         android:visibility="visible">
 
-        <com.google.android.material.progressindicator.CircularProgressIndicator
-            android:id="@+id/loadingIndicator"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:indeterminate="true"
-            app:indicatorColor="@color/md3_primary"
-            app:trackColor="@color/md3_primary_container"
-            app:indicatorSize="56dp"
-            app:trackThickness="4dp"
-            xmlns:app="http://schemas.android.com/apk/res-auto" />
+            android:layout_centerInParent="true"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <FrameLayout
+                android:layout_width="120dp"
+                android:layout_height="120dp">
+
+                <!-- Пульсирующий фон -->
+                <View
+                    android:id="@+id/pulseView"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/splash_circle" />
+
+                <ImageView
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:layout_gravity="center"
+                    android:src="@mipmap/ic_launcher"
+                    android:elevation="4dp" />
+            </FrameLayout>
+
+            <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:id="@+id/loadingIndicator"
+                android:layout_width="140dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:indeterminate="true"
+                app:indicatorColor="@color/md3_primary"
+                app:trackColor="@color/md3_primary_container"
+                app:trackThickness="4dp"
+                app:trackCornerRadius="2dp"
+                xmlns:app="http://schemas.android.com/apk/res-auto" />
+
+            <TextView
+                android:id="@+id/loadingText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/loading_server"
+                android:textColor="@color/md3_on_surface_variant"
+                android:textSize="13sp"
+                android:letterSpacing="0.05"
+                android:fontFamily="sans-serif-medium"
+                android:textAllCaps="true" />
+
+        </LinearLayout>
 
         <TextView
-            android:id="@+id/loadingText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="@string/loading_server"
-            android:textColor="@color/md3_on_surface_variant"
-            android:textSize="14sp"
-            android:fontFamily="sans-serif-medium" />
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="48dp"
+            android:text="APKLife students-first"
+            android:textColor="@color/md3_outline"
+            android:textSize="12sp"
+            android:fontFamily="sans-serif-light" />
 
-    </LinearLayout>
+    </RelativeLayout>
 
     <!-- Экран ошибки — показывается если Flask не удалось запустить -->
     <LinearLayout

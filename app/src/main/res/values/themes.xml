@@ -5,28 +5,13 @@
     Theme.APKLife.Splash — тема для splash-экрана Android 12+
 -->
 <resources>
-    <!-- Основная тема Material Design 3 (светлая) -->
+    <!-- Основная тема Material Design 3 (поддерживает Dynamic Colors) -->
     <style name="Theme.APKLife" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/md3_primary</item>
-        <item name="colorOnPrimary">@color/md3_on_primary</item>
-        <item name="colorPrimaryContainer">@color/md3_primary_container</item>
-        <item name="colorOnPrimaryContainer">@color/md3_on_primary_container</item>
-        <item name="colorSecondary">@color/md3_secondary</item>
-        <item name="colorSecondaryContainer">@color/md3_secondary_container</item>
-        <item name="colorError">@color/md3_error</item>
-        <item name="colorErrorContainer">@color/md3_error_container</item>
-        <item name="android:colorBackground">@color/md3_background</item>
-        <item name="colorSurface">@color/md3_surface</item>
-        <item name="colorOnSurface">@color/md3_on_surface</item>
-        <item name="colorOnSurfaceVariant">@color/md3_on_surface_variant</item>
-
-        <!-- Прозрачный статус-бар для edge-to-edge -->
-        <item name="android:statusBarColor">@color/md3_on_surface</item>
-        <item name="android:navigationBarColor">@color/md3_on_surface</item>
+        <!-- Оставляем пустой для автоматического использования Dynamic Colors -->
     </style>
 
     <!-- Тема для Splash Screen API (Android 12+) -->
-    <style name="Theme.APKLife.Splash" parent="Theme.APKLife">
-        <item name="android:windowSplashScreenBackground">@color/md3_background</item>
+    <style name="Theme.APKLife.Splash" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowSplashScreenBackground">?attr/colorSurface</item>
     </style>
 </resources>

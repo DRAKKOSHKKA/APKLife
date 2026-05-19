@@ -8,6 +8,7 @@ from services.cache_store import cache_size
 from services.config import settings
 from services.runtime_state import snapshot_state
 from services.utils_schedule import get_current_day_name, get_current_week
+from services.version import get_version_status
 
 bp_main = Blueprint("main", __name__)
 
@@ -26,6 +27,7 @@ def index():
 def health():
     """Return health diagnostic payload."""
     state = snapshot_state()
+    version_info = get_version_status()
     return jsonify(
         {
             "application_version": settings.app_version,
@@ -33,5 +35,11 @@ def health():
             "last_error_message": state.get("last_error"),
             "cache_size": cache_size(),
             "uptime_started_at": state.get("started_at"),
+            "version_status": version_info
         }
     )
+
+@bp_main.route("/version")
+def version():
+    """Return version update info."""
+    return jsonify(get_version_status())
