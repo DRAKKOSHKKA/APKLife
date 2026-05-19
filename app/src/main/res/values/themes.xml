@@ -6,7 +6,7 @@
 -->
 <resources>
     <!-- Основная тема Material Design 3 (светлая) -->
-    <style name="Theme.APKLife" parent="Theme.Material3.Light.NoActionBar">
+    <style name="Theme.APKLife" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/md3_primary</item>
         <item name="colorOnPrimary">@color/md3_on_primary</item>
         <item name="colorPrimaryContainer">@color/md3_primary_container</item>
@@ -21,10 +21,8 @@
         <item name="colorOnSurfaceVariant">@color/md3_on_surface_variant</item>
 
         <!-- Прозрачный статус-бар для edge-to-edge -->
-        <item name="android:statusBarColor">@color/md3_status_bar</item>
-        <item name="android:navigationBarColor">@color/md3_surface_container</item>
-        <item name="android:windowLightStatusBar">true</item>
-        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:statusBarColor">@color/md3_on_surface</item>
+        <item name="android:navigationBarColor">@color/md3_on_surface</item>
     </style>
 
     <!-- Тема для Splash Screen API (Android 12+) -->
