@@ -1,4 +1,0 @@
-ru.apklife.app.test.app-androidTest-0 E:\IDE\APKLife\android_native\app\build\generated\res\resValues\androidTest\debug
-ru.apklife.app.test.app-mergeDebugAndroidTestResources-1 E:\IDE\APKLife\android_native\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\merged.dir
-ru.apklife.app.test.app-mergeDebugAndroidTestResources-2 E:\IDE\APKLife\android_native\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\stripped.dir
-ru.apklife.app.test.app-debugAndroidTest-3 E:\IDE\APKLife\android_native\app\build\intermediates\merged_res\debugAndroidTest\mergeDebugAndroidTestResources

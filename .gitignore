@@ -1,0 +1,32 @@
+# Python
+.venv/
+venv/
+__pycache__/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+*.pyc
+app/src/main/python/runtime_app/logs/
+app/src/main/python/runtime_app/data/
+app/src/main/python/runtime_app/logs/
+
+# Flask
+instance/
+.env
+
+# Android Studio
+.gradle/
+.idea/
+local.properties
+build/
+app/build/
+
+# Kotlin/Java
+*.class
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
