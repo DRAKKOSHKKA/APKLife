@@ -16,6 +16,8 @@ const modalSettings = document.getElementById("modalSettings");
 const modalStatus = document.getElementById("modalStatus");
 const modalUpdate = document.getElementById("modalUpdate");
 const modalCalls = document.getElementById("modalCalls");
+const modalDevAuth = document.getElementById("modalDevAuth");
+const modalDevOptions = document.getElementById("modalDevOptions");
 
 // Получаем кнопки для открытия/закрытия диалоговых окон
 const openInfoBtn = document.getElementById("openModalInfo");
@@ -30,8 +32,29 @@ const closeModalCalls = document.getElementById("closeModalCalls");
 const btnHideCalls = document.getElementById("btnHideCalls");
 const offlineIndicator = document.getElementById("offline-indicator");
 
+// DEV кнопки и поля
+const openDevOptionsBtn = document.getElementById("openModalDevOptions");
+const closeDevOptionsBtn = document.getElementById("closeModalDevOptions");
+const btnVerifyDevCode = document.getElementById("btnVerifyDevCode");
+const closeDevAuthBtn = document.getElementById("closeModalDevAuth");
+const devCodeInput = document.getElementById("dev-code-input");
+const btnDisableDevMode = document.getElementById("btnDisableDevMode");
+
 // Ключ для хранения статуса режима разработчика в LocalStorage браузера
 const DEV_KEY = "devMode";
+
+/**
+ * Генерирует текущий код разработчика на основе времени.
+ * Формат: dev-d[день]m[месяц]d[год_последние_2_цифры]h[час]
+ */
+function getDevCode() {
+    const now = new Date();
+    const d = String(now.getDate()).padStart(2, '0');
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const y = String(now.getFullYear()).slice(-2);
+    const h = String(now.getHours()).padStart(2, '0');
+    return `dev-d${d}m${m}d${y}h${h}`;
+}
 
 /**
  * Функция обновления языка интерфейса.
@@ -66,17 +89,15 @@ function setOfflineIndicator(isOffline) {
 
 /**
  * Применяет режим разработчика.
- * Если режим активен: показывает отладочную DEV-панель с техническим состоянием.
+ * Если режим активен: показывает пункт меню "DEV Опции".
  */
 function applyDevModeState() {
 	const enabled = localStorage.getItem(DEV_KEY) === "true";
-	const panel = document.getElementById("dev-panel");
-	const toggleWrap = document.getElementById("dev-mode-toggle-wrap");
-	const switcher = document.getElementById("devModeSwitch");
+    const devMenuItem = document.getElementById("dev-menu-item");
 
-	if (switcher) switcher.checked = enabled;
-	if (toggleWrap) toggleWrap.classList.toggle("d-none", !enabled);
-	if (panel) panel.classList.toggle("d-none", !enabled);
+    if (devMenuItem) {
+        devMenuItem.classList.toggle("d-none", !enabled);
+    }
 
 	return enabled;
 }
@@ -87,6 +108,17 @@ function applyDevModeState() {
 function enableDevMode() {
 	localStorage.setItem(DEV_KEY, "true");
 	applyDevModeState();
+    alert("Режим разработчика активирован!");
+}
+
+/**
+ * Отключает режим разработчика.
+ */
+function disableDevMode() {
+    localStorage.removeItem(DEV_KEY);
+    applyDevModeState();
+    hideModal(modalDevOptions);
+    alert("Режим разработчика отключен.");
 }
 
 /**
@@ -96,7 +128,6 @@ async function loadDevData() {
 	if (localStorage.getItem(DEV_KEY) !== "true") return;
 	const status = document.getElementById("dev-status");
 	if (status) {
-		// Выводим серверное состояние в читаемом формате JSON
 		status.textContent = JSON.stringify(window.__SERVER_STATE__ || {}, null, 2);
 	}
 }
@@ -208,6 +239,51 @@ if (btnHideCalls && modalCalls) {
     };
 }
 
+// Привязываем DEV модалки
+if (openDevOptionsBtn && modalDevOptions) {
+    openDevOptionsBtn.onclick = (event) => {
+        event.preventDefault();
+        showModal(modalDevOptions, openDevOptionsBtn);
+        loadDevData();
+    };
+}
+
+if (closeDevOptionsBtn && modalDevOptions) {
+    closeDevOptionsBtn.onclick = () => {
+        hideModal(modalDevOptions, openDevOptionsBtn);
+    };
+}
+
+if (btnVerifyDevCode && modalDevAuth && devCodeInput) {
+    btnVerifyDevCode.onclick = () => {
+        const input = devCodeInput.value.trim();
+        const correctCode = getDevCode();
+        if (input === correctCode) {
+            enableDevMode();
+            hideModal(modalDevAuth);
+            devCodeInput.value = "";
+        } else {
+            alert("Неверный код доступа!");
+            devCodeInput.classList.add("is-invalid");
+            setTimeout(() => devCodeInput.classList.remove("is-invalid"), 500);
+        }
+    };
+}
+
+if (closeDevAuthBtn && modalDevAuth) {
+    closeDevAuthBtn.onclick = () => {
+        hideModal(modalDevAuth);
+    };
+}
+
+if (btnDisableDevMode) {
+    btnDisableDevMode.onclick = () => {
+        if (confirm("Вы уверены, что хотите выйти из DEV режима?")) {
+            disableDevMode();
+        }
+    };
+}
+
 // Закрытие модалок при клике на полупрозрачный фон снаружи диалога
 window.addEventListener("click", (event) => {
 	if (modalInfo && event.target === modalInfo) {
@@ -224,6 +300,9 @@ window.addEventListener("click", (event) => {
     }
     if (modalCalls && event.target === modalCalls) {
         hideModal(modalCalls);
+    }
+    if (modalDevOptions && event.target === modalDevOptions) {
+        hideModal(modalDevOptions);
     }
 });
 
@@ -401,9 +480,13 @@ function setupDevModeUnlock() {
 		taps = taps.filter((t) => now - t < 10000);
 		taps.push(now);
 
-		// Если за 10 секунд сделано 10 кликов — активируем режим разработчика!
+		// Если за 10 секунд сделано 10 кликов — показываем окно авторизации!
 		if (taps.length >= 10) {
-			enableDevMode();
+            if (localStorage.getItem(DEV_KEY) === "true") {
+                showModal(modalDevOptions);
+            } else {
+			    showModal(modalDevAuth);
+            }
 			taps = [];
 		}
 	});
@@ -462,6 +545,8 @@ document.addEventListener("DOMContentLoaded", () => {
 	// Кнопка подгрузки логов
 	if (loadLogsBtn) {
 		loadLogsBtn.addEventListener("click", () => {
+            const logsEl = document.getElementById("dev-logs");
+            logsEl.classList.remove("d-none");
 			void loadLogs();
 		});
 	}
@@ -490,28 +575,28 @@ document.addEventListener("DOMContentLoaded", () => {
 	}
 
 	// 3. Замер пинга до сервера
-	if (pingDevServerBtn && pingResult) {
+	if (pingDevServerBtn) {
 		pingDevServerBtn.addEventListener("click", async () => {
-			pingResult.textContent = "Замеряем пинг...";
-			pingResult.className = "dev-status text-info";
+            const networkLog = document.getElementById("dev-network-log");
+            networkLog.classList.remove("d-none");
+			networkLog.textContent = "Замеряем пинг...";
 			const start = Date.now();
 			try {
 				await fetch("/?ping=1");
 				const latency = Date.now() - start;
-				pingResult.textContent = `Связь с сервером установлена! Пинг: ${latency}мс`;
-				pingResult.className = "dev-status text-success";
+				networkLog.textContent = `Связь с сервером установлена! Пинг: ${latency}мс`;
 			} catch (error) {
-				pingResult.textContent = `Ошибка пинга: ${error.message}`;
-				pingResult.className = "dev-status text-danger";
+				networkLog.textContent = `Ошибка пинга: ${error.message}`;
 			}
 		});
 	}
 
 	// 4. Замер скачивания расписания
-	if (pingDownloadServerBtn && downloadResult) {
+	if (pingDownloadServerBtn) {
 		pingDownloadServerBtn.addEventListener("click", async () => {
-			downloadResult.textContent = "Скачивание расписания...";
-			downloadResult.className = "dev-status text-info";
+            const networkLog = document.getElementById("dev-network-log");
+            networkLog.classList.remove("d-none");
+			networkLog.textContent = "Скачивание расписания...";
 			const start = Date.now();
 			try {
 				const urlParams = new URLSearchParams(window.location.search);
@@ -528,11 +613,9 @@ document.addEventListener("DOMContentLoaded", () => {
 				if (size > 1024) {
 					sizeStr = (size / 1024).toFixed(1) + " KB";
 				}
-				downloadResult.textContent = `Успешно! Размер: ${sizeStr}, Задержка: ${latency}мс`;
-				downloadResult.className = "dev-status text-success";
+				networkLog.textContent = `Успешно! Размер: ${sizeStr}, Задержка: ${latency}мс`;
 			} catch (error) {
-				downloadResult.textContent = `Ошибка скачивания: ${error.message}`;
-				downloadResult.className = "dev-status text-danger";
+				networkLog.textContent = `Ошибка скачивания: ${error.message}`;
 			}
 		});
 	}
@@ -547,9 +630,45 @@ document.addEventListener("DOMContentLoaded", () => {
 			}
 			const url = new URL(window.location.href);
 			url.searchParams.set("test_time", time);
+
+            // Сохраняем mock data если выбрано
+            const mockData = document.getElementById("mock-data-select")?.value;
+            if (mockData && mockData !== "none") {
+                url.searchParams.set("mock_data", mockData);
+            } else {
+                url.searchParams.delete("mock_data");
+            }
+
 			window.location.href = url.toString();
 		});
 	}
+
+    // При загрузке страницы восстанавливаем значения в DEV панели
+    const urlParams = new URLSearchParams(window.location.search);
+    if (testHighlightTime && urlParams.has("test_time")) {
+        testHighlightTime.value = urlParams.get("test_time");
+        localStorage.setItem("mock_time_active", "true");
+    } else {
+        localStorage.setItem("mock_time_active", "false");
+    }
+
+    const mockSelect = document.getElementById("mock-data-select");
+    if (mockSelect && urlParams.has("mock_data")) {
+        mockSelect.value = urlParams.get("mock_data");
+    }
+
+    const overlaySwitch = document.getElementById("debugOverlaySwitch");
+    if (overlaySwitch) {
+        overlaySwitch.checked = localStorage.getItem("debug_overlay") === "true";
+    }
+
+    // Flags UI init
+    if (DebugModule && DebugModule.flags) {
+        Object.keys(DebugModule.flags).forEach(f => {
+            const el = document.getElementById(`flag-${f}`);
+            if (el) el.checked = DebugModule.flags[f];
+        });
+    }
 
 	// 6. Расширенная проверка обновлений
 	if (advancedUpdateCheckBtn && advancedUpdateResult) {

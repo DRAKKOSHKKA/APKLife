@@ -40,6 +40,7 @@ def create_app() -> Flask:
     def inject_global_data():
         """Inject global status into all templates."""
         test_time = request.args.get("test_time")
+        mock_data = request.args.get("mock_data")
         now_msk = datetime.now(timezone(timedelta(hours=3)))
         ru_days = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
         today_short = ru_days[now_msk.weekday()]
@@ -54,6 +55,7 @@ def create_app() -> Flask:
             "supported_langs": ("ru",),
             "call_schedule": get_calls_context(test_time),
             "test_time": test_time,
+            "mock_data": mock_data,
             "today_short": today_short,
             "now_msk": now_msk
         }

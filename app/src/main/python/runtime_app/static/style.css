@@ -984,13 +984,30 @@ body.dark-mode .md3-timer-badge i {
 .dev-status {
 	max-height: 180px;
 	overflow: auto;
-	padding: 8px;
-	border-radius: 8px;
-	font-family: monospace;
+	padding: 12px;
+	border-radius: 12px;
+	font-family: 'Fira Code', 'Roboto Mono', monospace;
 	font-size: 0.75rem;
-	background-color: var(--md3-surface-container-high);
-	color: var(--md3-on-surface);
+	background-color: var(--md3-surface-container-lowest);
+	color: var(--md3-primary);
 	white-space: pre-wrap;
+    border: 1px solid var(--md3-outline-variant);
+}
+
+.dev-section-title {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--md3-primary);
+    margin-bottom: 8px;
+    margin-left: 4px;
+}
+
+.dev-bento-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .dev-tap-target {
@@ -1053,12 +1070,26 @@ body.dark-mode .md3-warning-banner {
     border-color: color-mix(in srgb, var(--md3-warning) 30%, transparent);
 }
 
+/* Desktop layout refinements */
+@media (min-width: 992px) {
+    .bento-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .network-card {
+        grid-column: span 1;
+    }
+}
+
 @media (min-width: 768px) {
 	.main-content-wrapper {
 		max-width: 1000px;
 		margin: 0 auto;
 		padding: 0 24px;
 	}
+
+    .cn-modal-content {
+        margin: 5% auto;
+    }
 }
 
 /* Floating Action Button (FAB) */
@@ -1477,9 +1508,103 @@ body.dark-mode .modal-footer {
 
 @media (min-width: 768px) {
     .md3-top-app-bar {
-        left: 96px; /* Space for Nav Rail */
+        left: 0;
+        top: 0;
+        width: 100%;
+        max-width: none;
+        transform: none;
+        border-radius: 0;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .app-bar-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 0 24px;
+        height: 72px;
+    }
+
+    .app-bar-title {
+        font-size: 24px;
+    }
+
+    .unified-nav-container {
+        max-width: 900px;
+        margin: 24px auto;
+        padding: 16px;
+        background-color: var(--md3-surface-container-high);
+        border-radius: 24px;
+    }
+
+    .day-chips-container {
+        justify-content: center;
+        gap: 12px;
+    }
+
+    .day-chip {
+        height: 40px;
+        padding: 0 24px;
+        font-size: 15px;
+    }
+
+    .main-content-wrapper {
+		max-width: 1000px;
+		margin: 0 auto;
+		padding: 0 24px;
+	}
+
+    .content-spacer {
+        height: 200px;
+    }
+
+    /* Одиночная колонка, но с ограничением ширины для красоты */
+    .md3-card {
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+        border-radius: 24px;
+    }
+
+    .lesson {
+        margin: 8px 0;
+        padding: 20px 24px;
+    }
+
+    .search-container {
+        max-width: 700px;
+        padding-top: 60px;
+    }
+
+    .md3-fab {
+        right: calc(50% - 400px - 80px);
+        width: 64px;
+        height: 64px;
+        border-radius: 20px;
     }
 }
+
+@media (min-width: 1200px) {
+    .app-bar-container {
+        max-width: 1200px;
+    }
+    .main-content-wrapper {
+        max-width: 1200px;
+    }
+    .md3-top-app-bar {
+        max-width: none;
+    }
+    .md3-fab {
+        right: calc(50% - 400px - 100px);
+    }
+}
+
+/* Fix for broken overlaps on wide screens */
+.app-bar-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    width: 100%;
+}
+
 
 /* Info Dialog Feature Items styling */
 .info-features-list {

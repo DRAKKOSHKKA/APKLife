@@ -261,12 +261,29 @@ class MainActivity : AppCompatActivity() {
         }
         
         // Добавляем интерфейс для получения темы из JS
-        webView.addJavascriptInterface(object {
+        val webInterface = object {
             @JavascriptInterface
             fun getTheme(): String {
                 return getThemeJson()
             }
-        }, "AndroidTheme")
+
+            @JavascriptInterface
+            fun getMemoryInfo(): String {
+                val runtime = Runtime.getRuntime()
+                val usedMem = (runtime.totalMemory() - runtime.freeMemory()) / 1024 / 1024
+                val totalMem = runtime.maxMemory() / 1024 / 1024
+                val percent = (usedMem.toDouble() / totalMem.toDouble() * 100).toInt()
+                return "$usedMem / $totalMem MB ($percent%)"
+            }
+
+            @JavascriptInterface
+            fun getAppVersion(): String {
+                return BuildConfig.VERSION_NAME
+            }
+        }
+        
+        webView.addJavascriptInterface(webInterface, "AndroidTheme")
+        webView.addJavascriptInterface(webInterface, "AndroidBridge")
 
         webView.overScrollMode = View.OVER_SCROLL_NEVER
 

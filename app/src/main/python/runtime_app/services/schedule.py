@@ -29,6 +29,7 @@ from services.utils_schedule import (
     get_schedule,
     internet_available,
 )
+from services.mock_service import get_mock_schedule
 
 
 def build_base_context() -> dict[str, Any]:
@@ -222,6 +223,35 @@ def load_schedule_context(args):
 
     # Разрешаем группу в метаданные
     entity_info, corrected_name = _resolve_entity(group_name)
+
+    # MOCK DATA INJECTION
+    mock_mode = args.get("mock_data")
+    if mock_mode and mock_mode != "none":
+        mock_schedule = get_mock_schedule(mock_mode)
+        if isinstance(mock_schedule, str):  # Broken JSON test
+             context["error"] = "MOCK_ERROR: Broken JSON detected"
+             return context
+
+        schedule = {day_name: [mock_schedule["days"][0]["Lessons"]] for day_name in ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб"]}
+        active_day = detect_active_day(schedule, day)
+        mark_current_lessons(schedule, active_day, args.get("test_time"))
+        if active_day:
+            schedule = {active_day: schedule[active_day]}
+
+        context.update({
+            "group_info": {"SearchString": mock_schedule["group_name"], "SearchId": "MOCK_ID", "Type": "Student"},
+            "schedule": schedule,
+            "days_list": ["Пн 01.01", "Вт 02.01", "Ср 03.01", "Чт 04.01", "Пт 05.01", "Сб 06.01"],
+            "prev_week_id": active_week_id - 1,
+            "next_week_id": active_week_id + 1,
+            "active_day": active_day,
+            "schedule_source": "mock",
+            "schedule_message": f"MOCK MODE: {mock_mode}",
+            "metrics": snapshot(),
+            "test_time": args.get("test_time"),
+        })
+        return context
+
     if not entity_info:
         context["error"] = tr("group_not_found", name=group_name)
         return context

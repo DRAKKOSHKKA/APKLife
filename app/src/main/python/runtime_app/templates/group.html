@@ -20,6 +20,7 @@
                 <ul class="dropdown-menu dropdown-menu-end md3-dropdown-menu">
                     <li><a class="dropdown-item" href="#" id="openModalSettings"><i class="bi bi-gear me-3"></i>{{ t('settings') }}</a></li>
                     <li><a class="dropdown-item" href="#" id="openModalInfo"><i class="bi bi-info-circle me-3"></i>{{ t('about_project') }}</a></li>
+                    <li id="dev-menu-item" class="d-none"><a class="dropdown-item text-danger fw-bold" href="#" id="openModalDevOptions"><i class="bi bi-cpu-fill me-3"></i>DEV Options</a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="https://t.me/drakkoshkka" target="_blank"><i class="bi bi-chat-dots me-3"></i>{{ t('feedback') }}</a></li>
                     <li><a class="dropdown-item" href="https://yoomoney.ru/to/4100118029094054" target="_blank"><i class="bi bi-heart-fill text-danger me-3"></i>{{ t('support') }}</a></li>
@@ -31,12 +32,12 @@
     <div class="unified-nav-container">
         <div class="week-navigation">
             <div class="week-pagination-row">
-                <a href="/group/?group_name={{ group_info.SearchString|urlencode }}{% if prev_week_id is not none %}&week_id={{ prev_week_id }}{% endif %}&lang={{ lang }}"
+                <a href="/group/?group_name={{ group_info.SearchString|urlencode }}{% if prev_week_id is not none %}&week_id={{ prev_week_id }}{% endif %}{% if mock_data %}&mock_data={{ mock_data }}{% endif %}{% if test_time %}&test_time={{ test_time|urlencode }}{% endif %}&lang={{ lang }}"
                    class="week-nav-btn {% if not prev_week_id %}disabled{% endif %}">
                     <i class="bi bi-chevron-left"></i>
                 </a>
                 <span class="week-label">{{ t('week') }} {{ week_number_display }}</span>
-                <a href="/group/?group_name={{ group_info.SearchString|urlencode }}{% if next_week_id is not none %}&week_id={{ next_week_id }}{% endif %}&lang={{ lang }}"
+                <a href="/group/?group_name={{ group_info.SearchString|urlencode }}{% if next_week_id is not none %}&week_id={{ next_week_id }}{% endif %}{% if mock_data %}&mock_data={{ mock_data }}{% endif %}{% if test_time %}&test_time={{ test_time|urlencode }}{% endif %}&lang={{ lang }}"
                    class="week-nav-btn {% if not next_week_id %}disabled{% endif %}">
                     <i class="bi bi-chevron-right"></i>
                 </a>
@@ -44,7 +45,7 @@
 
             <div class="day-chips-container">
                 {% for day in days_list %}
-                <a href="/group/?group_name={{ group_info.SearchString|urlencode }}{% if week_id is not none %}&week_id={{ week_id }}{% endif %}&day={{ day.split(' ')[0] }}&lang={{ lang }}"
+                <a href="/group/?group_name={{ group_info.SearchString|urlencode }}{% if week_id is not none %}&week_id={{ week_id }}{% endif %}&day={{ day.split(' ')[0] }}{% if mock_data %}&mock_data={{ mock_data }}{% endif %}{% if test_time %}&test_time={{ test_time|urlencode }}{% endif %}&lang={{ lang }}"
                    class="day-chip {% if active_day and day.split(' ')[0] == active_day.split(' ')[0] %}active{% endif %}">
                     {{ day.split(" ")[1].split(".")[0] }}
                 </a>

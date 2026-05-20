@@ -31,7 +31,7 @@
 
 		<!-- Floating Action Button (FAB) for Mobile / Quick Action -->
 		{% if group_info %}
-		<a class="md3-fab" href="/group/?group_name={{ group_info.SearchString|urlencode }}{% if week_id is not none %}&week_id={{ week_id }}{% endif %}{% if active_day %}&day={{ active_day.split(' ')[0] }}{% endif %}&force_refresh=1&lang={{ lang }}" aria-label="{{ t('refresh_schedule') }}">
+		<a class="md3-fab" href="/group/?group_name={{ group_info.SearchString|urlencode }}{% if week_id is not none %}&week_id={{ week_id }}{% endif %}{% if active_day %}&day={{ active_day.split(' ')[0] }}{% endif %}{% if mock_data %}&mock_data={{ mock_data }}{% endif %}{% if test_time %}&test_time={{ test_time|urlencode }}{% endif %}&force_refresh=1&lang={{ lang }}" aria-label="{{ t('refresh_schedule') }}">
 			<i class="bi bi-arrow-clockwise"></i>
 		</a>
 		{% endif %}
@@ -123,71 +123,186 @@
 						<label class="form-check-label" for="devModeSwitch">{{ t('dev_mode') }}</label>
 					</div>
 					
-					<!-- Панель разработчика с расширенным набором крутых инструментов! -->
-					<div id="dev-panel" class="dev-panel d-none mt-3 p-3 rounded bg-light border">
-						<h6 class="border-bottom pb-1 mb-2"><i class="bi bi-bug-fill text-danger"></i> DEV-панель инженера</h6>
-						
-						<!-- 1. Состояние сервера -->
-						<div class="mb-2">
-							<small class="text-muted fw-bold d-block mb-1">Глобальный стейт (Server State):</small>
-							<pre id="dev-status" class="dev-status">loading...</pre>
-						</div>
-						
-						<!-- 2. Очистка локального кэша PWA на клиенте -->
-						<button id="clearDevCacheBtn" class="btn btn-sm btn-outline-danger w-100 mb-2">
-							<i class="bi bi-trash3-fill"></i> Очистить кэш LocalStorage
-						</button>
-						
-						<!-- 3. Имитация оффлайн режима для тестирования интерфейса -->
-						<div class="form-check form-switch mb-2">
-							<input class="form-check-input" type="checkbox" id="mockOfflineSwitch" />
-							<label class="form-check-label" for="mockOfflineSwitch"><small>Имитировать оффлайн</small></label>
-						</div>
-						
-						<!-- 4. Тестирование сетевой производительности -->
-						<div class="mb-2">
-							<small class="text-muted fw-bold d-block mb-1">Замеры производительности сети:</small>
-							<div class="d-grid gap-1">
-								<button id="pingDevServerBtn" class="btn btn-sm btn-outline-info w-100">
-									<i class="bi bi-speedometer2"></i> Замерить просто пинг (RTT)
-								</button>
-								<pre id="ping-result" class="dev-status text-info mb-2">Пинг не замерялся</pre>
-
-								<button id="pingDownloadServerBtn" class="btn btn-sm btn-outline-success w-100">
-									<i class="bi bi-cloud-arrow-down-fill"></i> Замерить скачивание расписания
-								</button>
-								<pre id="download-result" class="dev-status text-success mb-2">Скачивание не замерялось</pre>
-							</div>
-						</div>
-
-						<!-- 5. Тестирование выделения уроков (Feature 5.1) -->
-						<div class="mb-3">
-							<small class="text-muted fw-bold d-block mb-1">Тестирование подсветки урока:</small>
-							<div class="input-group input-group-sm mb-1">
-								<span class="input-group-text">Время</span>
-								<input type="text" id="testHighlightTime" class="form-control" placeholder="Напр. 08:40" value="08:40">
-								<button id="testHighlightBtn" class="btn btn-outline-primary">Тест</button>
-							</div>
-							<small class="text-muted" style="font-size: 0.7rem;">Обновит страницу с указанным временем для проверки выделения.</small>
-						</div>
-
-						<!-- 6. Продвинутая проверка обновлений (Feature 5.2) -->
-						<div class="mb-3">
-							<small class="text-muted fw-bold d-block mb-1">Продвинутая проверка обновлений:</small>
-							<button id="advancedUpdateCheckBtn" class="btn btn-sm btn-outline-warning w-100 mb-1">
-								<i class="bi bi-cloud-check-fill"></i> Запустить расширенную проверку
-							</button>
-							<pre id="advanced-update-result" class="dev-status text-warning">Информация об обновлениях не получена</pre>
-						</div>
-						
-						<!-- 7. Загрузка логов сервера -->
-						<button id="loadLogsBtn" class="btn btn-sm btn-outline-secondary w-100 mb-2">
-							<i class="bi bi-file-earmark-text-fill"></i> Загрузить логи сервера
-						</button>
-						<pre id="dev-logs" class="dev-status">logs hidden</pre>
-					</div>
+					<!-- Панель разработчика удалена отсюда и вынесена в отдельное меню -->
 				</div>
 				<button class="btn btn-primary w-100 mt-2" id="closeModalSettings">{{ t('close') }}</button>
+			</div>
+		</div>
+
+		<!-- Modal: Dev Auth (Ввод кода разработчика) -->
+		<div id="modalDevAuth" class="cn-modal" role="dialog" aria-modal="true">
+			<div class="cn-modal-content bento-modal expressive-entrance">
+				<h5 class="fw-bold mb-3"><i class="bi bi-shield-lock-fill text-warning me-2"></i>Доступ инженера</h5>
+				<p class="text-muted small mb-4">Для активации инструментов отладки введите динамический код доступа.</p>
+
+				<div class="mb-3">
+					<label class="form-label small fw-bold text-uppercase">Код доступа</label>
+					<input type="text" id="dev-code-input" class="form-control text-center font-monospace" placeholder="dev-dXXmXXdXXhXX" />
+				</div>
+
+				<div class="d-grid gap-2">
+					<button class="btn btn-primary btn-expressive" id="btnVerifyDevCode">Подтвердить</button>
+					<button class="btn btn-outline-secondary" id="closeModalDevAuth">Отмена</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- Modal: DEV Options (Новая расширенная панель управления) -->
+		<div id="modalDevOptions" class="cn-modal" role="dialog" aria-modal="true">
+			<div class="cn-modal-content bento-modal expressive-entrance" style="max-width: 650px !important; width: 95%;">
+				<div class="d-flex align-items-center justify-content-between mb-4">
+					<h5 class="m-0 fw-bold"><i class="bi bi-cpu-fill text-danger me-2"></i>DEV Options Panel</h5>
+					<button class="btn-close-md3" id="closeModalDevOptions"><i class="bi bi-x"></i></button>
+				</div>
+
+				<div class="dev-bento-grid">
+					<!-- Секция: Система и Кэш -->
+					<div class="dev-section-title">Система и Данные</div>
+					<div class="bento-grid">
+						<div class="bento-card" id="clearDevCacheBtn" style="cursor: pointer;">
+							<div class="bento-icon" style="background: var(--md3-error-container); color: var(--md3-error);"><i class="bi bi-trash3"></i></div>
+							<div class="bento-info">
+								<span class="bento-label">Очистка</span>
+								<span class="bento-value">Сброс кэша</span>
+							</div>
+						</div>
+						<div class="bento-card">
+							<div class="bento-info">
+								<div class="form-check form-switch p-0 m-0 d-flex align-items-center gap-3">
+									<input class="form-check-input ms-0" type="checkbox" id="mockOfflineSwitch" />
+									<div>
+										<span class="bento-label d-block">Связь</span>
+										<span class="bento-value">Offline Mode</span>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Секция: Диагностика Сети -->
+					<div class="dev-section-title mt-3">Диагностика и Сеть</div>
+					<div class="bento-grid">
+						<div class="bento-card" id="pingDevServerBtn" style="cursor: pointer;">
+							<div class="bento-icon"><i class="bi bi-speedometer2"></i></div>
+							<div class="bento-info">
+								<span class="bento-label">Пинг</span>
+								<span class="bento-value">Check RTT</span>
+							</div>
+						</div>
+						<div class="bento-card" id="pingDownloadServerBtn" style="cursor: pointer;">
+							<div class="bento-icon" style="background: var(--md3-secondary-container);"><i class="bi bi-cloud-download"></i></div>
+							<div class="bento-info">
+								<span class="bento-label">Загрузка</span>
+								<span class="bento-value">Test Stream</span>
+							</div>
+						</div>
+					</div>
+					<pre id="dev-network-log" class="dev-status mt-2 d-none"></pre>
+
+					<!-- Секция: Тестирование UI и Ошибок -->
+					<div class="dev-section-title mt-3">UI и Симуляция Ошибок</div>
+					<div class="bento-grid">
+						<div class="bento-card" onclick="document.getElementById('error-container').classList.remove('d-none'); document.getElementById('error-message').textContent='SIMULATED ERROR 500: Internal Server Test';" style="cursor: pointer;">
+							<div class="bento-icon" style="background: var(--md3-error); color: white;"><i class="bi bi-exclamation-triangle"></i></div>
+							<div class="bento-info">
+								<span class="bento-label">Ошибки</span>
+								<span class="bento-value">Simulate 500</span>
+							</div>
+						</div>
+						<div class="bento-card" id="testHighlightBtn" style="cursor: pointer;">
+							<div class="bento-icon" style="background: var(--md3-tertiary-container);"><i class="bi bi-clock"></i></div>
+							<div class="bento-info">
+								<span class="bento-label">Таймер</span>
+								<span class="bento-value">Test Highlight</span>
+							</div>
+						</div>
+					</div>
+					<div class="input-group input-group-sm mt-2">
+						<span class="input-group-text">Время теста</span>
+						<input type="text" id="testHighlightTime" class="form-control" value="08:30" />
+					</div>
+
+					<!-- Секция: Состояние сервера (JSON) -->
+					<div class="dev-section-title mt-3">Server State (Raw JSON)</div>
+					<pre id="dev-status" class="dev-status mb-2">loading...</pre>
+
+					<!-- Секция: Логи -->
+					<div class="dev-section-title mt-3">Системный Журнал</div>
+                    <div class="d-grid gap-2 mb-2">
+                        <button id="loadLogsBtn" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-file-earmark-text me-2"></i>Logs (Server)
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary" onclick="DebugModule.showConsole()">
+                            <i class="bi bi-terminal me-2"></i>Logs (Console)
+                        </button>
+                    </div>
+					<pre id="dev-logs" class="dev-status d-none"></pre>
+
+                    <!-- Секция: Новые Debug функции -->
+                    <div class="dev-section-title mt-3">Advanced Debug Tools</div>
+                    <div class="bento-grid">
+                        <div class="bento-card">
+                            <div class="bento-info">
+                                <div class="form-check form-switch p-0 m-0 d-flex align-items-center gap-3">
+                                    <input class="form-check-input ms-0" type="checkbox" id="debugOverlaySwitch" onchange="DebugModule.toggleOverlay(this.checked)" />
+                                    <div>
+                                        <span class="bento-label d-block">Overlay</span>
+                                        <span class="bento-value">Debug Overlay</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bento-card" id="stressTestBtn" style="cursor: pointer;" onclick="DebugModule.stressTestUI()">
+                            <div class="bento-icon" style="background: var(--md3-warning-container);"><i class="bi bi-lightning-charge"></i></div>
+                            <div class="bento-info">
+                                <span class="bento-label">Stress</span>
+                                <span class="bento-value">UI Stress Test</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dev-section-title mt-3">Feature Flags</div>
+                    <div class="card p-3 bg-light border-0 rounded-4">
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="flag-newUI" onchange="DebugModule.flags.newUI=this.checked; DebugModule.saveFlags();">
+                            <label class="form-check-label small">Experimental New UI</label>
+                        </div>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="flag-expParser" onchange="DebugModule.flags.experimentalParser=this.checked; DebugModule.saveFlags();">
+                            <label class="form-check-label small">Experimental Parser</label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="flag-debugAnim" onchange="DebugModule.flags.debugAnimations=this.checked; DebugModule.saveFlags();">
+                            <label class="form-check-label small">Debug Animations</label>
+                        </div>
+                    </div>
+
+                    <div class="dev-section-title mt-3">Mock System</div>
+                    <div class="card p-3 bg-light border-0 rounded-4">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Mock Schedule Data</label>
+                            <select id="mock-data-select" class="form-select form-select-sm">
+                                <option value="none">None (Real Data)</option>
+                                <option value="empty">Empty Schedule</option>
+                                <option value="long">Extreme Long List</option>
+                                <option value="broken">Broken JSON</option>
+                                <option value="duplicates">Duplicate Lessons</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label small fw-bold">Mock Time Preset</label>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button class="btn btn-xs btn-outline-secondary" style="font-size: 10px;" onclick="document.getElementById('testHighlightTime').value='08:30';">Урок</button>
+                                <button class="btn btn-xs btn-outline-secondary" style="font-size: 10px;" onclick="document.getElementById('testHighlightTime').value='09:20';">Перемена</button>
+                                <button class="btn btn-xs btn-outline-secondary" style="font-size: 10px;" onclick="document.getElementById('testHighlightTime').value='20:00';">Конец дня</button>
+                            </div>
+                        </div>
+                    </div>
+				</div>
+
+				<div class="mt-4 border-top pt-3 text-center">
+					<button class="btn btn-outline-danger btn-sm" id="btnDisableDevMode"><i class="bi bi-door-closed me-2"></i>Выйти из режима разработчика</button>
+				</div>
 			</div>
 		</div>
 
@@ -297,6 +412,7 @@
 		</script>
 		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 		<script src="{{ url_for('static', filename='scripts.js') }}"></script>
+		<script src="{{ url_for('static', filename='debug.js') }}"></script>
 		{% block scripts %}{% endblock %}
 
 		<script src="app.js"></script>

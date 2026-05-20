@@ -17,7 +17,7 @@ android {
         minSdk = 24
         targetSdk = 34
         versionCode = 2
-        versionName = "0.1.2"
+        versionName = "0.1.4"
 
         // Поддерживаемые архитектуры процессоров Android-устройств
         ndk {
