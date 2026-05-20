@@ -14,6 +14,7 @@ class Settings:
     host: str = os.getenv("APP_HOST", "0.0.0.0")
     port: int = int(os.getenv("APP_PORT", "5000"))
     debug: bool = os.getenv("APP_DEBUG", "true").lower() == "true"
+    testing: bool = os.getenv("APP_TESTING", "false").lower() == "true"
     search_url: str = os.getenv("SEARCH_URL", "https://it-institut.ru/SearchString/KeySearch")
     schedule_url_template: str = os.getenv(
         "SCHEDULE_URL_TEMPLATE",

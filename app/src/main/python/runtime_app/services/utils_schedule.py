@@ -19,7 +19,7 @@ from services.exceptions import (
     ScheduleParseError,
     ScheduleSchemaChangedError,
 )
-from services.http_client import http_client
+from services.http_client import http_client as default_http_client
 from services.i18n import tr
 from services.logger import setup_logger
 from services.metrics import inc, mark_source, set_value
@@ -29,6 +29,7 @@ from services.validators import normalize_search_string, validate_entity_info
 
 logger = setup_logger("schedule")
 source = InstituteHtmlScheduleSource()
+http_client = default_http_client
 
 
 def get_current_day_name() -> str:

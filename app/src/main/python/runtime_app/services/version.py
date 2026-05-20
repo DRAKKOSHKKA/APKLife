@@ -7,13 +7,16 @@ from datetime import datetime, timedelta, timezone
 from time import perf_counter
 
 from services.config import settings
-from services.http_client import http_client
+from services.http_client import http_client as default_http_client
 from services.logger import setup_logger
 
 logger = setup_logger(__name__)
 
+# Позволяет подменять клиент для тестов без изменения глобального синглтона
+http_client = default_http_client
+
 GITHUB_REPO_API = "https://api.github.com/repos/drakkoshkka/APKLife/commits/main"
-GITHUB_RELEASES_API = "https://api.github.com/repos/drakkoshkka/APKLife/releases/latest"
+GITHUB_RELEASES_API = "https://api.github.com/repos/drakkoshkka/APKLife/releases"
 _CACHE_TTL = timedelta(minutes=10)
 _MAX_BACKOFF_SECONDS = 60 * 30
 _BASE_BACKOFF_SECONDS = 60
@@ -180,11 +183,13 @@ def _fetch_latest_release() -> tuple[str | None, bool, str | None]:
         _set_failure_backoff(f"release_http_{status}")
         return None, False, None
 
-    if isinstance(payload, dict):
+    if isinstance(payload, list) and len(payload) > 0:
+        # Берем самый первый (последний по времени) релиз из списка
+        latest_release_obj = payload[0]
         etag_new = headers.get("ETag")
         if etag_new:
             _CACHE["etag_release"] = etag_new
-        return _extract_release(payload), False, None
+        return _extract_release(latest_release_obj), False, None
 
     _set_failure_backoff("release_invalid_payload")
     return None, False, None

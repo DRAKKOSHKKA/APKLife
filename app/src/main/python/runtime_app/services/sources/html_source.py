@@ -5,10 +5,12 @@ from __future__ import annotations
 from urllib.parse import quote
 
 from services.config import settings
-from services.http_client import http_client
+from services.http_client import http_client as default_http_client
 from services.schedule_parser import parse_schedule_html
 from services.sources.base import ScheduleSource
 from services.types import ScheduleResult
+
+http_client = default_http_client
 
 
 class InstituteHtmlScheduleSource(ScheduleSource):

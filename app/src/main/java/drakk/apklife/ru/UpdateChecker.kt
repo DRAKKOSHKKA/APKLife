@@ -1,4 +1,4 @@
-package ru.apklife.app
+package drakk.apklife.ru
 
 import android.content.Context
 import android.content.Intent

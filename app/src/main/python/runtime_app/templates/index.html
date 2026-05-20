@@ -1,21 +1,75 @@
 {% extends "base.html" %}
 {% block header %}
-<h4 class="m-0">📅 {{ t('app_title') }}</h4>
+<div class="md3-top-app-bar">
+    <div class="app-bar-container">
+        <div class="app-bar-title-wrapper">
+            <h1 class="app-bar-title">📅 {{ t('app_title') }}</h1>
+        </div>
+        <div class="app-bar-actions">
+            <a href="#" id="openModalCalls" class="app-bar-action" title="{{ t('call_schedule') }}">
+                <i class="bi bi-bell"></i>
+            </a>
+            <div class="dropdown">
+                <a href="#" class="app-bar-action" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-three-dots-vertical"></i>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end md3-dropdown-menu">
+                    <li><a class="dropdown-item" href="#" id="openModalSettings"><i class="bi bi-gear me-3"></i>{{ t('settings') }}</a></li>
+                    <li><a class="dropdown-item" href="#" id="openModalInfo"><i class="bi bi-info-circle me-3"></i>{{ t('about_project') }}</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="https://t.me/drakkoshkka" target="_blank"><i class="bi bi-chat-dots me-3"></i>{{ t('feedback') }}</a></li>
+                    <li><a class="dropdown-item" href="https://yoomoney.ru/to/4100118029094054" target="_blank"><i class="bi bi-heart-fill text-danger me-3"></i>{{ t('support') }}</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block content %}
-<div class="card shadow-sm search-card">
+<div class="content-spacer"></div>
+<div class="md3-warning-banner mb-4 shadow-sm expressive-entrance">
+    <div class="md3-warning-icon">
+        <i class="bi bi-shield-exclamation"></i>
+    </div>
+    <div class="md3-warning-content">
+        <div class="md3-warning-title">{{ t('attention') }}</div>
+        <div class="md3-warning-text">{{ t('testing_warning') }}</div>
+    </div>
+</div>
+
+<div class="search-container expressive-entrance">
+    <div class="search-bar-wrapper mb-3">
+        <i class="bi bi-search search-bar-icon"></i>
+        <form id="searchForm" method="get" action="/group/" class="w-100">
+            <input type="text" class="search-bar-input" id="group-input" name="group_name" placeholder="{{ t('search_placeholder') }}" autocomplete="off" />
+            <input type="hidden" name="week_id" value="{{ current_week }}" />
+            <input type="hidden" name="lang" value="{{ lang }}" />
+        </form>
+    </div>
+
+    <div id="suggestions-container" class="suggestions-list shadow-sm"></div>
+</div>
+
+<div class="card shadow-sm mt-4 md3-card">
 	<div class="card-body">
-		<h5 class="card-title">{{ t('search_hint') }}</h5>
-		<form id="searchForm" method="get" action="/group/">
-			<div class="mb-3 position-relative">
-				<input type="text" class="form-control" id="group-input" name="group_name" placeholder="{{ t('search_placeholder') }}" autocomplete="on" />
-				<div id="suggestions-container" class="list-group position-absolute w-100"></div>
-				<input type="hidden" name="week_id" value="{{ current_week }}" />
-				<input type="hidden" name="lang" value="{{ lang }}" />
-			</div>
-			<button type="submit" class="btn btn-primary w-100">{{ t('find_schedule') }}</button>
-		</form>
+		<h6 class="card-title fw-bold text-primary mb-3">
+			<i class="bi bi-stars me-2"></i> {{ t('whats_new') }}
+		</h6>
+		<ul class="list-unstyled mb-0 whats-new-list">
+			<li class="mb-2 d-flex align-items-start">
+				<i class="bi bi-check2-circle text-success me-2 mt-1"></i>
+				<span>Исправление мелких ошибок.</span>
+			</li>
+			<li class="mb-2 d-flex align-items-start">
+				<i class="bi bi-check2-circle text-success me-2 mt-1"></i>
+				<span>Улучшение стабильности приложения.</span>
+			</li>
+			<li class="mb-2 d-flex align-items-start">
+				<i class="bi bi-check2-circle text-success me-2 mt-1"></i>
+				<span>Изменение визуальной составляющей.</span>
+			</li>
+		</ul>
 	</div>
 </div>
 {% endblock %}

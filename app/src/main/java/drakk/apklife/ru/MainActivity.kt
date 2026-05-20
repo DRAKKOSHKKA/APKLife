@@ -1,8 +1,10 @@
-package ru.apklife.app
+package drakk.apklife.ru
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -18,6 +20,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.LinearLayout
+import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
@@ -34,8 +37,6 @@ import java.net.InetSocketAddress
 import java.net.Socket
 import com.google.android.material.color.DynamicColors
 import com.google.android.material.color.MaterialColors
-import ru.apklife.app.UpdateChecker
-import ru.apklife.app.BuildConfig
 
 /**
  * MainActivity — единственная Activity приложения APKLife для Android.
@@ -72,8 +73,8 @@ class MainActivity : AppCompatActivity() {
     // UI-элементы
     private lateinit var webView: WebView
     private lateinit var swipeRefresh: SwipeRefreshLayout
-    private lateinit var splashOverlay: View
-    private lateinit var errorOverlay: View
+    private lateinit var splashOverlay: RelativeLayout
+    private lateinit var errorOverlay: LinearLayout
     private lateinit var errorMessage: TextView
     private lateinit var loadingText: TextView
     private lateinit var retryButton: MaterialButton
@@ -308,18 +309,26 @@ class MainActivity : AppCompatActivity() {
 
             /**
              * Все URL с нашего localhost открываем в WebView.
-             * Внешние ссылки (например, ссылки на Google) — тоже в WebView,
-             * потому что наше приложение самодостаточно.
+             * Внешние ссылки открываем во внешнем браузере.
              */
             override fun shouldOverrideUrlLoading(
                 view: WebView?,
                 request: WebResourceRequest?
             ): Boolean {
                 val url = request?.url?.toString() ?: return false
-                // Всё что на localhost — грузим внутри
-                if (url.startsWith(SERVER_URL)) return false
-                // Внешние URL тоже грузим внутри WebView (опционально)
-                view?.loadUrl(url)
+                
+                // Если ссылка ведет на наш локальный сервер — открываем в WebView
+                if (url.startsWith(SERVER_URL)) {
+                    return false
+                }
+                
+                // Иначе — открываем во внешнем браузере
+                try {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to open external URL: $url", e)
+                }
                 return true
             }
         }

@@ -1,4 +1,4 @@
-package ru.apklife.app
+package drakk.apklife.ru
 
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

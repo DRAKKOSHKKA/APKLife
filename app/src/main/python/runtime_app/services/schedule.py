@@ -18,6 +18,7 @@ from services.exceptions import ScheduleError
 from services.i18n import tr
 from services.metrics import snapshot
 from services.runtime_state import mark_error, mark_success
+from services.calls import WEEKDAY_SCHEDULE, SATURDAY_SCHEDULE
 from services.utils_schedule import (
     cache_state_for,
     fetch_network_schedule,
@@ -129,46 +130,46 @@ def mark_current_lessons(schedule: dict[str, Any], active_day: str | None, test_
     if not test_time and not active_day.startswith(today_short):
         return
 
-    for lesson_list in schedule[active_day]:
-        for lesson in lesson_list:
-            time_range = lesson.get("time")
-            if not time_range:
-                continue
+    is_sat = "Суббота" in active_day or "Сб" in active_day
+    current_calls = SATURDAY_SCHEDULE if is_sat else WEEKDAY_SCHEDULE
+    # Извлекаем только уроки
+    lesson_calls = [c for c in current_calls if c[0] == 'lesson']
 
-            try:
-                # Очистка и парсинг диапазона типа "08:30-10:00"
-                parts = time_range.replace(" ", "").replace(".", ":").replace("–", "-").split("-")
-                if len(parts) != 2:
-                    continue
+    for idx, lesson_list in enumerate(schedule[active_day]):
+        # Получаем время для текущей пары по индексу
+        if idx < len(lesson_calls):
+            _, _, start, end = lesson_calls[idx]
+            sh, sm = map(int, start.split(":"))
+            eh, em = map(int, end.split(":"))
+            start_m = sh * 60 + sm
+            end_m = eh * 60 + em
 
-                sh, sm = map(int, parts[0].split(":"))
-                eh, em = map(int, parts[1].split(":"))
+            is_current_period = start_m <= current_time_minutes < end_m
 
-                start_m = sh * 60 + sm
-                end_m = eh * 60 + em
-
-                if start_m <= current_time_minutes < end_m:
+            for lesson in lesson_list:
+                if is_current_period:
                     lesson["is_current"] = True
-            except Exception:
-                continue
+                # Обновляем время в самом объекте урока, чтобы в шаблоне было проще
+                lesson["time"] = f"{start}-{end}"
 
 
 def _resolve_entity(group_name: str):
     """
     Вспомогательная функция для разрешения имени группы в метаданные.
 
-    Сначала мы делаем сетевой запрос к поисковому API колледжа через `get_group_info`.
-    Если сеть недоступна или поиск не дал результатов, мы пытаемся найти подходящую группу
-    в локальном кэше через `get_cached_entity_info`. Это позволяет приложению полноценно
-    работать в режиме PWA (Offline-first)!
+    Сначала мы ищем подходящую группу в локальном кэше (Cache-first!).
+    Это позволяет приложению открывать расписание МГНОВЕННО без ожидания сети.
+    Если в кэше ничего нет, тогда идем в интернет через get_group_info.
     """
-    entity_info, corrected_name = get_group_info(group_name)
-    if entity_info:
-        return entity_info, corrected_name
-
+    # 1. Сначала проверяем локальный кэш
     cached_entity = get_cached_entity_info(group_name)
     if cached_entity:
         return cached_entity, cached_entity.get("SearchString")
+
+    # 2. Только если в кэше пусто — идем в сеть (может занять время)
+    entity_info, corrected_name = get_group_info(group_name)
+    if entity_info:
+        return entity_info, corrected_name
 
     return None, None
 
@@ -256,10 +257,11 @@ def load_schedule_context(args):
             "schedule_source": source_meta.get("source"),
             "schedule_message": source_meta.get("message"),
             "cache_updated_at": source_meta.get("cache_updated_at"),
-            "offline": not internet_available(),
+            "offline": source_meta.get("source") == "cache", # Отключена активная проверка интернета при загрузке кэша
             "warning": source_meta.get("warning"),
             "error_type": source_meta.get("error_type"),
             "metrics": snapshot(),
+            "test_time": args.get("test_time"),
         }
     )
     context = _with_cache_state(context, week_id or get_current_week(), entity_info)
@@ -330,8 +332,9 @@ def force_refresh_context(args):
             "warning": source_meta.get("warning"),
             "error_type": source_meta.get("error_type"),
             "error": source_meta.get("message") if not schedule else None,
-            "offline": not internet_available(),
+            "offline": False, # Не проверяем сеть при загрузке из кэша
             "metrics": snapshot(),
+            "test_time": args.get("test_time"),
         }
     )
     context = _with_cache_state(context, week_id, entity_info)

@@ -29,7 +29,12 @@ def test_version_status_github_unavailable(monkeypatch) -> None:
     def _fail(*_args, **_kwargs):
         raise ScheduleFetchError("offline")
 
-    monkeypatch.setattr(version.http_client, "get_json_with_meta", _fail)
+    # Создаем мок-объект, чтобы не патчить глобальный синглтон http_client напрямую
+    class MockClient:
+        def get_json_with_meta(self, *args, **kwargs):
+            return _fail(*args, **kwargs)
+
+    monkeypatch.setattr(version, "http_client", MockClient())
 
     payload = version.get_version_status()
     assert payload["local_commit"] == "abc1234"
@@ -60,7 +65,11 @@ def test_version_status_not_modified_uses_cache(monkeypatch) -> None:
         calls["count"] += 1
         return 304, None, {}
 
-    monkeypatch.setattr(version.http_client, "get_json_with_meta", _meta)
+    class MockClient:
+        def get_json_with_meta(self, *args, **kwargs):
+            return _meta(*args, **kwargs)
+
+    monkeypatch.setattr(version, "http_client", MockClient())
 
     payload = version.get_version_status()
     assert calls["count"] == 2
@@ -80,7 +89,11 @@ def test_version_status_rate_limit_sets_next_allowed(monkeypatch) -> None:
     def _meta(*_args, **_kwargs):
         return responses.pop(0)
 
-    monkeypatch.setattr(version.http_client, "get_json_with_meta", _meta)
+    class MockClient:
+        def get_json_with_meta(self, *args, **kwargs):
+            return _meta(*args, **kwargs)
+
+    monkeypatch.setattr(version, "http_client", MockClient())
 
     payload = version.get_version_status()
     assert payload["is_update_available"] is False

@@ -15,6 +15,7 @@ const modalInfo = document.getElementById("modalInfo");
 const modalSettings = document.getElementById("modalSettings");
 const modalStatus = document.getElementById("modalStatus");
 const modalUpdate = document.getElementById("modalUpdate");
+const modalCalls = document.getElementById("modalCalls");
 
 // Получаем кнопки для открытия/закрытия диалоговых окон
 const openInfoBtn = document.getElementById("openModalInfo");
@@ -24,6 +25,9 @@ const closeSettingsBtn = document.getElementById("closeModalSettings");
 const openStatusBtn = document.getElementById("openModalStatus");
 const closeStatusBtn = document.getElementById("closeModalStatus");
 const closeUpdateBtn = document.getElementById("closeModalUpdate");
+const openCallsBtns = document.querySelectorAll("#openModalCalls");
+const closeModalCalls = document.getElementById("closeModalCalls");
+const btnHideCalls = document.getElementById("btnHideCalls");
 const offlineIndicator = document.getElementById("offline-indicator");
 
 // Ключ для хранения статуса режима разработчика в LocalStorage браузера
@@ -47,7 +51,17 @@ function updateLanguage(lang) {
 function setOfflineIndicator(isOffline) {
 	if (!offlineIndicator) return;
 	const mockOffline = document.getElementById("mockOfflineSwitch")?.checked;
-	offlineIndicator.classList.toggle("d-none", !(isOffline || mockOffline));
+    const finalOffline = !!(isOffline || mockOffline);
+	offlineIndicator.classList.toggle("d-none", !finalOffline);
+
+    // Обновляем текст в Bento-модалке, если она открыта
+    const statusText = document.getElementById("status-network-text");
+    const statusPulse = document.getElementById("status-network-pulse");
+    if (statusText) statusText.textContent = finalOffline ? "Оффлайн" : "Онлайн";
+    if (statusPulse) {
+        statusPulse.className = finalOffline ? "status-pulse" : "status-pulse pulse-online";
+        if (finalOffline) statusPulse.style.background = "var(--md3-error)";
+    }
 }
 
 /**
@@ -172,6 +186,28 @@ if (closeUpdateBtn && modalUpdate) {
     };
 }
 
+// Привязываем обработчики клика для открытия/закрытия диалога "Расписание звонков"
+if (openCallsBtns && modalCalls) {
+    openCallsBtns.forEach(btn => {
+        btn.onclick = (event) => {
+            event.preventDefault();
+            showModal(modalCalls, btn);
+        };
+    });
+}
+
+if (closeModalCalls && modalCalls) {
+    closeModalCalls.onclick = () => {
+        hideModal(modalCalls);
+    };
+}
+
+if (btnHideCalls && modalCalls) {
+    btnHideCalls.onclick = () => {
+        hideModal(modalCalls);
+    };
+}
+
 // Закрытие модалок при клике на полупрозрачный фон снаружи диалога
 window.addEventListener("click", (event) => {
 	if (modalInfo && event.target === modalInfo) {
@@ -185,6 +221,9 @@ window.addEventListener("click", (event) => {
     }
     if (modalUpdate && event.target === modalUpdate) {
         hideModal(modalUpdate);
+    }
+    if (modalCalls && event.target === modalCalls) {
+        hideModal(modalCalls);
     }
 });
 
@@ -233,10 +272,78 @@ async function refreshScheduleInBackground() {
 				metrics: payload.metrics,
 			};
 			setOfflineIndicator(!!payload.offline || !navigator.onLine);
+
+            // Re-initialize timer if active item changed
+            initCountdownTimer();
 		}
 	} catch (error) {
 		console.warn("Background refresh skipped:", error);
 	}
+}
+
+/**
+ * Автоматический таймер обратного отсчета до конца пары или перемены.
+ * Обновляется каждую секунду и отображает оставшееся время в MD3 стиле.
+ */
+let countdownInterval = null;
+
+function initCountdownTimer() {
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+    }
+
+    const mainTimerContainer = document.getElementById("countdown-timer");
+    const mainDisplay = document.getElementById("timer-display");
+    const modalDisplays = document.querySelectorAll(".modal-timer-display");
+
+    if (!mainTimerContainer && modalDisplays.length === 0) return;
+
+    // Получаем время окончания из любого доступного элемента
+    let endIso = null;
+    if (mainTimerContainer) endIso = mainTimerContainer.dataset.end;
+    if (!endIso) {
+        for (const d of modalDisplays) {
+            if (d.dataset.end) {
+                endIso = d.dataset.end;
+                break;
+            }
+        }
+    }
+
+    if (!endIso) return;
+
+    const endDate = new Date(endIso);
+
+    const update = () => {
+        const now = new Date();
+        const diff = endDate - now;
+
+        if (diff <= 0) {
+            if (mainDisplay) mainDisplay.textContent = "00:00";
+            modalDisplays.forEach(d => d.textContent = "Завершено");
+
+            clearInterval(countdownInterval);
+            // Когда таймер истек — инициируем фоновое обновление расписания
+            setTimeout(() => refreshScheduleInBackground(), 2000);
+            return;
+        }
+
+        const minutes = Math.floor(diff / 1000 / 60);
+        const seconds = Math.floor((diff / 1000) % 60);
+
+        const mStr = String(minutes).padStart(2, '0');
+        const sStr = String(seconds).padStart(2, '0');
+        const timeStr = `${mStr}:${sStr}`;
+
+        if (mainDisplay) mainDisplay.textContent = timeStr;
+        modalDisplays.forEach(d => {
+            d.textContent = `Осталось ${timeStr}`;
+        });
+    };
+
+    update();
+    countdownInterval = setInterval(update, 1000);
 }
 
 /**
@@ -483,6 +590,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	void refreshScheduleInBackground();
 	void prefetchNeighborWeeks();
     void checkUpdates();
+    initCountdownTimer();
 
 	// Загружаем список групп для автодополнения (поисковые предложения)
 	fetch("/static/suggestions.json")
@@ -509,7 +617,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			return;
 		}
 
-		// Фильтруем массив подсказок и выводим не более 10 наиболее близких результатов
+		// Фильтруем массив подсказок
 		const filtered = suggestions
 			.filter((item) => item.name.toLowerCase().includes(inputValue))
 			.slice(0, 10);
@@ -522,15 +630,21 @@ document.addEventListener("DOMContentLoaded", () => {
 		suggestionsContainer.innerHTML = "";
 		filtered.forEach((suggestion) => {
 			const item = document.createElement("a");
-			item.className = "list-group-item list-group-item-action";
+			item.className = "suggestion-item";
+            item.href = "#";
 
-			// Стилизуем бейджи подсказок в зависимости от их типа (Студент, Преподаватель, Аудитория)
-			let badgeColor = "primary";
-			if (suggestion.type === "Teacher") badgeColor = "success";
-			else if (suggestion.type === "Classroom") badgeColor = "info";
+			// Иконка в зависимости от типа
+			let icon = "bi-people";
+			if (suggestion.type === "Teacher") icon = "bi-person-badge";
+			else if (suggestion.type === "Classroom") icon = "bi-geo-alt";
 
-			item.innerHTML = `${suggestion.name} <span class="badge rounded-pill bg-${badgeColor} badge-type">${suggestion.type}</span>`;
-			item.href = "#";
+            item.innerHTML = `
+                <div class="suggestion-icon"><i class="bi ${icon}"></i></div>
+                <div class="suggestion-content">
+                    <span class="suggestion-name">${suggestion.name}</span>
+                    <span class="suggestion-type">${suggestion.type === 'Student' ? 'Группа' : (suggestion.type === 'Teacher' ? 'Преподаватель' : 'Кабинет')}</span>
+                </div>
+            `;
 
 			// При клике на подсказку — подставляем текст и сразу отправляем форму!
 			item.addEventListener("click", (event) => {

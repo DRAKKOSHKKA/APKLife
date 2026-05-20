@@ -1,29 +1,71 @@
+{% set is_viewing_today = false %}
+{% if schedule %}
+    {% for day in schedule.keys() %}
+        {% if day.startswith(today_short) %}
+            {% set is_viewing_today = true %}
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
 {% if schedule_message %}
-<div class="alert {% if schedule_source == 'cache' %}alert-warning{% elif schedule_source == 'network' %}alert-success{% else %}alert-danger{% endif %} schedule-alert" role="alert">
-	<i class="bi {% if schedule_source == 'cache' %}bi-hdd-network{% elif schedule_source == 'network' %}bi-cloud-check{% else %}bi-exclamation-triangle{% endif %}"></i>
-	{{ schedule_message }}
-	{% if cache_updated_at %}
-	<div class="cache-updated-at">{{ t('last_update') }}: {{ cache_updated_at.replace('T', ' ') }}</div>
-	{% endif %}
+<div class="alert alert-info py-2 mb-3 mt-5">
+    <i class="bi bi-info-circle me-2"></i> {{ schedule_message }}
+</div>
+{% endif %}
+
+{% if call_schedule.active_item and call_schedule.active_item.type == 'break' and is_viewing_today %}
+<div class="alert alert-info break-alert mb-3 expressive-entrance" role="alert">
+    <div class="d-flex align-items-center justify-content-between">
+        <div>
+            <i class="bi bi-cup-hot-fill me-2"></i>
+            <strong>{{ call_schedule.active_item.label }}</strong>
+        </div>
+        <div class="break-countdown">
+            Осталось <strong class="modal-timer-display" data-end="{{ call_schedule.active_item.end_iso }}">{{ call_schedule.active_item.time_left }} мин</strong>
+        </div>
+    </div>
 </div>
 {% endif %}
 
 {% for day, lessons in schedule.items() %}
+{% set is_sat = 'Суббота' in day or 'Сб' in day %}
+{% set is_today = day.startswith(today_short) %}
+{% set current_day_calls = call_schedule.saturday_items if is_sat else call_schedule.weekday_items %}
+{# Фильтруем только уроки для сопоставления по индексу #}
+{% set day_lessons_times = current_day_calls | selectattr('type', 'equalto', 'lesson') | list %}
+
 <div class="card mb-3 shadow-sm md3-card">
-	<div class="card-header bg-light">
+	<div class="card-header bg-light d-flex align-items-center justify-content-between">
 		<h5 class="card-title mb-0">{{ day }}</h5>
+        {% if call_schedule.active_item and is_today %}
+        <div id="countdown-timer" class="md3-timer-badge" data-end="{{ call_schedule.active_item.end_iso }}">
+            <i class="bi bi-stopwatch"></i>
+            <span id="timer-display">--:--</span>
+        </div>
+        {% endif %}
 	</div>
 	<div class="card-body p-0">
 		{% if lessons %}
 		<ul class="list-group list-group-flush">
 			{% for lesson_list in lessons %}
+			{% set period_index = loop.index %}
+            {# Получаем время из расписания звонков по индексу пары #}
+            {% set call_time = day_lessons_times[period_index - 1] if period_index <= day_lessons_times|length else none %}
+            {% set display_time = (call_time.start + '-' + call_time.end) if call_time else lesson_list[0].time %}
+
 			<li class="list-group-item lesson-item">
 				{% if lesson_list %}
 					{% for lesson in lesson_list %}
 					<div class="lesson {% if lesson.is_current %}current-lesson{% endif %} {% if lesson_list|length > 1 %}multiple-lesson{% endif %} {% if not lesson.subject %}empty-lesson{% if 'Сб' in day or 'Вс' in day %} weekend-empty{% endif %}{% endif %}">
 						<div class="lesson-content">
-							{% if lesson.time %}
-							<div class="time"><i class="bi bi-clock"></i>{% if lesson_list|length > 1 %}<small> #{{ loop.index }}:</small>{% endif %} {{ lesson.time }}</div>
+							{% if display_time %}
+							<div class="time-wrapper">
+								<div class="time">
+									<i class="bi bi-clock"></i>
+									{% if lesson_list|length > 1 %}<small> #{{ loop.index }}:</small>{% endif %} {{ display_time }}
+								</div>
+								<div class="period-badge">{{ period_index }}</div>
+							</div>
 							{% endif %}
 							{% if lesson.subject %}
 							<div class="subject"><i class="bi bi-book"></i> {{ lesson.subject.rstrip(',') }}</div>
@@ -43,6 +85,18 @@
 					{% endfor %}
 				{% endif %}
 			</li>
+
+            {# Отображение перемены #}
+            {% set break_idx = 2 * period_index - 1 %}
+            {% if not loop.last and break_idx < current_day_calls|length %}
+                {% set break_item = current_day_calls[break_idx] %}
+                <li class="list-group-item break-item-row {% if break_item.is_active and is_today %}active-break{% endif %}">
+                    <div class="d-flex align-items-center justify-content-between text-muted small">
+                        <span><i class="bi bi-cup-hot me-1"></i> {{ break_item.label }}</span>
+                        <span>{{ break_item.start }} - {{ break_item.end }}</span>
+                    </div>
+                </li>
+            {% endif %}
 			{% endfor %}
 		</ul>
 		{% endif %}

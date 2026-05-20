@@ -5,6 +5,7 @@
     ProgressBar отображается во время загрузки Flask-сервера.
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -68,8 +69,7 @@
                 app:indicatorColor="@color/md3_primary"
                 app:trackColor="@color/md3_primary_container"
                 app:trackThickness="4dp"
-                app:trackCornerRadius="2dp"
-                xmlns:app="http://schemas.android.com/apk/res-auto" />
+                app:trackCornerRadius="2dp" />
 
             <TextView
                 android:id="@+id/loadingText"
@@ -90,7 +90,7 @@
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:layout_centerHorizontal="true"
-            android:layout_marginBottom="48dp"
+            android:layout_marginBottom="120dp"
             android:text="APKLife students-first"
             android:textColor="@color/md3_outline"
             android:textSize="12sp"

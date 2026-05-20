@@ -36,6 +36,43 @@
 		</a>
 		{% endif %}
 
+		<!-- Modal: Call Schedule (Расписание звонков) -->
+		<div id="modalCalls" class="cn-modal" role="dialog" aria-modal="true" aria-labelledby="modalCallsTitle">
+			<div class="cn-modal-content bento-modal expressive-entrance">
+				<div class="d-flex align-items-center justify-content-between mb-4">
+					<h5 id="modalCallsTitle" class="m-0 fw-bold"><i class="bi bi-bell-fill me-2 text-warning"></i>{{ t('call_schedule') if t('call_schedule') != 'call_schedule' else 'Расписание звонков' }}</h5>
+					<button class="btn-close-md3" id="closeModalCalls"><i class="bi bi-x"></i></button>
+				</div>
+
+				<div class="calls-list">
+					{% for item in call_schedule['items'] %}
+					<div class="call-row {% if item.is_active %}active-call{% endif %} {% if item.type == 'break' %}break-row{% endif %}">
+						<div class="call-number">
+							{% if item.type == 'lesson' %}
+								{{ item.label }}
+							{% else %}
+								<i class="bi bi-cup-hot"></i>
+							{% endif %}
+						</div>
+						<div class="call-time">
+							<span class="call-label">{% if item.type == 'lesson' %}Пара{% else %}{{ item.label }}{% endif %}</span>
+							<span class="call-hours">{{ item.start }} — {{ item.end }}</span>
+						</div>
+						{% if item.is_active %}
+						<div class="call-status">
+							<span class="badge rounded-pill bg-primary modal-timer-display" data-end="{{ call_schedule.active_item.end_iso if call_schedule.active_item else '' }}">
+								{% if item.time_left > 0 %}Осталось {{ item.time_left }} мин{% else %}Завершается{% endif %}
+							</span>
+						</div>
+						{% endif %}
+					</div>
+					{% endfor %}
+				</div>
+
+				<button class="btn btn-primary w-100 mt-4" id="btnHideCalls">{{ t('close') }}</button>
+			</div>
+		</div>
+
 		<!-- Modal: About Project (О проекте) -->
 		<div id="modalInfo" class="cn-modal" role="dialog" aria-modal="true" aria-labelledby="modalInfoTitle">
 			<div class="cn-modal-content">
@@ -77,13 +114,6 @@
 			<div class="cn-modal-content">
 				<h5 id="modalSettingsTitle" class="card-title settings-title">{{ t('settings') }}</h5>
 				<div class="modal-body">
-					<div class="mb-3">
-						<label class="form-label" for="languageSelect">{{ t('language') }}</label>
-						<select id="languageSelect" class="form-select">
-							<option value="ru" {% if lang == 'ru' %}selected{% endif %}>{{ t('lang_ru') }}</option>
-							<option value="en" {% if lang == 'en' %}selected{% endif %}>{{ t('lang_en') }}</option>
-						</select>
-					</div>
 					<div class="form-check form-switch mb-3">
 						<input class="form-check-input" type="checkbox" id="darkModeSwitch" />
 						<label class="form-check-label" for="darkModeSwitch">{{ t('dark_theme') }}</label>
@@ -163,7 +193,7 @@
 
 		<!-- Modal: Status (Состояние) -->
 		<div id="modalStatus" class="cn-modal" role="dialog" aria-modal="true" aria-labelledby="modalStatusTitle">
-			<div class="cn-modal-content bento-modal">
+			<div class="cn-modal-content bento-modal expressive-entrance">
 				<div class="d-flex align-items-center justify-content-between mb-4">
 					<h5 id="modalStatusTitle" class="m-0 fw-bold">{{ t('info') }}</h5>
 					<button class="btn-close-md3" id="closeModalStatus"><i class="bi bi-x"></i></button>
@@ -175,9 +205,48 @@
 						<div class="bento-icon"><i class="bi bi-wifi"></i></div>
 						<div class="bento-info">
 							<span class="bento-label">Сеть</span>
-							<span class="bento-value status-online">{{ 'Онлайн' if not offline else 'Оффлайн' }}</span>
+							<span class="bento-value status-online" id="status-network-text">{{ 'Онлайн' if not offline else 'Оффлайн' }}</span>
 						</div>
-						<div class="status-pulse pulse-online"></div>
+						<div class="status-pulse pulse-online" id="status-network-pulse"></div>
+					</div>
+
+					<!-- Карточка: Локальная версия -->
+					<div class="bento-card">
+						<div class="bento-icon"><i class="bi bi-device-hdd"></i></div>
+						<div class="bento-info">
+							<span class="bento-label">Локально</span>
+							<span class="bento-value">v{{ version_status.local_version if version_status else '0.1.0' }}</span>
+						</div>
+					</div>
+
+                    <!-- Карточка: Версия на GitHub -->
+					<div class="bento-card" onclick="window.open('{{ version_status.release_url if version_status else 'https://github.com/DRAKKOSHKKA/APKLife/releases' }}', '_blank')" style="cursor: pointer;">
+						<div class="bento-icon" style="background: var(--md3-tertiary-container); color: var(--md3-on-tertiary-container);"><i class="bi bi-github"></i></div>
+						<div class="bento-info">
+							<span class="bento-label">GitHub</span>
+							<span class="bento-value" id="status-remote-version">{{ version_status.latest_release if version_status and version_status.latest_release else '---' }}</span>
+						</div>
+                        {% if version_status and version_status.is_update_available %}
+                        <div class="status-pulse pulse-update"></div>
+                        {% endif %}
+					</div>
+
+					<!-- Карточка: Тип обновления -->
+					<div class="bento-card">
+						<div class="bento-icon" style="background: var(--md3-secondary-container); color: var(--md3-on-secondary-container);"><i class="bi bi-info-square"></i></div>
+						<div class="bento-info">
+							<span class="bento-label">Тип</span>
+							<span class="bento-value" style="font-size: 13px;">{{ version_status.update_type if version_status else 'Release' }}</span>
+						</div>
+					</div>
+
+					<!-- Карточка: Пинг API -->
+					<div class="bento-card">
+						<div class="bento-icon" style="background: var(--md3-surface-container-highest); color: var(--md3-on-surface);"><i class="bi bi-speedometer"></i></div>
+						<div class="bento-info">
+							<span class="bento-label">Пинг API</span>
+							<span class="bento-value">{{ version_status.latency_ms if version_status else '0' }} <small>ms</small></span>
+						</div>
 					</div>
 
 					<!-- Карточка: Источник данных -->
@@ -185,42 +254,14 @@
 						<div class="bento-icon"><i class="bi bi-database-fill"></i></div>
 						<div class="bento-info">
 							<span class="bento-label">Данные</span>
-							<span class="bento-value">{{ cache_state if cache_state else 'Прямой эфир' }}</span>
+							<span class="bento-value">{{ cache_state if cache_state and cache_state != 'unknown' else 'Прямой эфир' }}</span>
 						</div>
-					</div>
-
-					<!-- Карточка: Производительность -->
-					{% if metrics and metrics.total_time is defined %}
-					<div class="bento-card metrics-card">
-						<div class="bento-icon"><i class="bi bi-lightning-fill"></i></div>
-						<div class="bento-info">
-							<span class="bento-label">Загрузка</span>
-							<span class="bento-value">{{ metrics.total_time }} <small>сек</small></span>
-						</div>
-						<div class="metrics-visual">
-							<div class="progress-bar-mini">
-								<div class="progress-fill" style="width: {{ (1.0 / (metrics.total_time + 0.1)) * 100 }}%"></div>
-							</div>
-						</div>
-					</div>
-					{% endif %}
-
-					<!-- Карточка: Техническая инфо -->
-					<div class="bento-card version-card" onclick="window.open('https://github.com/DRAKKOSHKKA/APKLife/releases', '_blank')" style="cursor: pointer;">
-						<div class="bento-icon"><i class="bi bi-tag-fill"></i></div>
-						<div class="bento-info">
-							<span class="bento-label">Версия</span>
-							<span class="bento-value">v{{ version_status.local_version if version_status else '0.1.0' }}</span>
-						</div>
-                        {% if version_status and version_status.is_update_available %}
-                        <div class="status-pulse pulse-update"></div>
-                        {% endif %}
 					</div>
 				</div>
 
 				<div class="status-footer mt-4">
-					<div class="status-last-sync">
-						<i class="bi bi-check2-circle me-1"></i> Последняя синхронизация: только что
+					<div class="status-last-sync" id="status-last-check">
+						<i class="bi bi-clock-history me-1"></i> Проверено: {{ version_status.last_checked_at.split('T')[1] if version_status and version_status.last_checked_at else '---' }}
 					</div>
 				</div>
 			</div>

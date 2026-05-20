@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "ru.apklife.app"
+    namespace = "drakk.apklife.ru"
     compileSdk = 34
 
     buildFeatures {
@@ -13,11 +13,11 @@ android {
     }
 
     defaultConfig {
-        applicationId = "ru.apklife.app"
+        applicationId = "drakk.apklife.ru"
         minSdk = 24
         targetSdk = 34
         versionCode = 2
-        versionName = "0.1.1"
+        versionName = "0.1.2"
 
         // Поддерживаемые архитектуры процессоров Android-устройств
         ndk {

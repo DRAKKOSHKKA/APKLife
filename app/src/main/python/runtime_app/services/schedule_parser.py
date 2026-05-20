@@ -416,8 +416,16 @@ def parse_schedule_html(html_text: str, week_id: int | None = None) -> ScheduleR
         if mode == "tolerant_ok":
             logger.warning("schema_guard_tolerant_mode_used diagnostics=%s", dict(diagnostics))
 
-        expanded_headers = _expand_header_cells(header_cells)
-        time_headers = [normalize_optional(h) for h in expanded_headers[1:]]
+        # Определяем временные слоты на основе заголовков и их colspan.
+        # Это позволяет корректно обрабатывать объединение ячеек (colspan) в заголовке.
+        time_slots = []
+        for cell in header_cells[1:]:
+            text = _cell_text(cell)
+            try:
+                colspan = max(int(cell.get("colspan", 1)), 1)
+            except (TypeError, ValueError):
+                colspan = 1
+            time_slots.append({"time": normalize_optional(text), "colspan": colspan})
 
         schedule: dict[str, list[list[Lesson]]] = {}
         days_list: list[str] = []
@@ -437,31 +445,57 @@ def parse_schedule_html(html_text: str, week_id: int | None = None) -> ScheduleR
             lessons_for_day: list[list[Lesson]] = []
 
             lesson_cells = cells[1:]
-            time_index = 0
+
+            # Сопоставляем индекс колонки с конкретной ячейкой в строке.
+            # Мы создаем плоский список ячеек, где ячейка с colspan=N повторяется N раз.
+            col_to_cell = []
             for cell in lesson_cells:
-                raw_colspan = cell.get("colspan", 1)
-                raw_rowspan = cell.get("rowspan", 1)
                 try:
-                    colspan = max(int(raw_colspan), 1)
+                    cspan = max(int(cell.get("colspan", 1)), 1)
                 except (TypeError, ValueError):
-                    colspan = 1
-                try:
-                    _rowspan = max(int(raw_rowspan), 1)
-                except (TypeError, ValueError):
-                    _rowspan = 1
+                    cspan = 1
+                col_to_cell.extend([cell] * cspan)
 
-                current_time_range = (
-                    time_headers[time_index] if time_index < len(time_headers) else None
-                )
-                lessons = _parse_cell_lessons(cell, current_time_range)
-                lessons_for_day.append(lessons)
+            current_col = 0
+            for slot in time_slots:
+                slot_lessons: list[Lesson] = []
 
-                if colspan > 1:
-                    # Сохраняем пустые слоты времени, если ячейка объединена по горизонтали
-                    for _ in range(colspan - 1):
-                        lessons_for_day.append([{**EMPTY_LESSON, "time": current_time_range}])
+                # Собираем все уникальные ячейки, которые попадают в диапазон колонок этого слота
+                cells_in_slot = []
+                for _ in range(slot["colspan"]):
+                    if current_col < len(col_to_cell):
+                        cell = col_to_cell[current_col]
+                        # Проверяем, не добавили ли мы уже эту ячейку (если она с colspan > 1)
+                        if not cells_in_slot or cells_in_slot[-1] is not cell:
+                            cells_in_slot.append(cell)
+                        current_col += 1
 
-                time_index += colspan
+                # Парсим каждую ячейку и объединяем уроки
+                for cell in cells_in_slot:
+                    parsed = _parse_cell_lessons(cell, slot["time"])
+                    for lesson in parsed:
+                        if lesson.get("subject"):
+                            # Если найден реальный предмет, удаляем пустые заглушки из текущего слота
+                            slot_lessons = [l for l in slot_lessons if l.get("subject")]
+
+                            # Дедупликация: не добавляем один и тот же урок дважды
+                            is_duplicate = any(
+                                l.get("subject") == lesson.get("subject")
+                                and l.get("teacher") == lesson.get("teacher")
+                                and l.get("room") == lesson.get("room")
+                                for l in slot_lessons
+                            )
+                            if not is_duplicate:
+                                slot_lessons.append(lesson)
+                        elif not slot_lessons:
+                            # Добавляем пустой урок только если в слоте еще нет реальных предметов
+                            slot_lessons.append(lesson)
+
+                # Если слот остался пустым — гарантируем наличие хотя бы одного "пустого" объекта
+                if not slot_lessons:
+                    slot_lessons = [{**EMPTY_LESSON, "time": slot["time"]}]
+
+                lessons_for_day.append(slot_lessons)
 
             # Обрезка пустых пар в конце дня (Feature 5.1):
             # Удаляем пустые уроки с конца списка, пока не встретим реальный урок.

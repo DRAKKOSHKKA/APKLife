@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flask import Blueprint, jsonify, render_template
+from flask import Blueprint, jsonify, render_template, request, redirect, url_for
 
 from services.cache_store import cache_size
 from services.config import settings
@@ -15,7 +15,12 @@ bp_main = Blueprint("main", __name__)
 
 @bp_main.route("/")
 def index():
-    """Render search page with default week/day values."""
+    """Render search page or redirect to last group."""
+    last_group = request.cookies.get("last_group")
+    # Если есть кука с последней группой и мы не нажимали "назад" к поиску специально
+    if last_group and request.args.get("select") != "1":
+        return redirect(url_for("group.group_page", group_name=last_group, lang=request.cookies.get("lang", "ru")))
+
     return render_template(
         "index.html",
         current_week=get_current_week(),

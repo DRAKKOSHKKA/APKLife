@@ -3,19 +3,28 @@
 {% block header %}
 <div class="md3-top-app-bar">
     <div class="app-bar-container">
-        <a href="/?lang={{ lang }}" class="app-bar-action" title="{{ t('back') }}">
+        <a href="/?lang={{ lang }}&select=1" class="app-bar-action" title="{{ t('back') }}">
             <i class="bi bi-arrow-left"></i>
         </a>
         <div class="app-bar-title-wrapper">
             <h1 class="app-bar-title">{{ group_info.SearchString }}</h1>
         </div>
         <div class="app-bar-actions">
-            <a href="#" id="openModalSettings" class="app-bar-action" title="{{ t('settings') }}">
-                <i class="bi bi-gear"></i>
+            <a href="#" id="openModalCalls" class="app-bar-action" title="{{ t('call_schedule') }}">
+                <i class="bi bi-bell"></i>
             </a>
-            <a href="#" id="openModalInfo" class="app-bar-action" title="{{ t('info') }}">
-                <i class="bi bi-info-circle"></i>
-            </a>
+            <div class="dropdown">
+                <a href="#" class="app-bar-action" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-three-dots-vertical"></i>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end md3-dropdown-menu">
+                    <li><a class="dropdown-item" href="#" id="openModalSettings"><i class="bi bi-gear me-3"></i>{{ t('settings') }}</a></li>
+                    <li><a class="dropdown-item" href="#" id="openModalInfo"><i class="bi bi-info-circle me-3"></i>{{ t('about_project') }}</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="https://t.me/drakkoshkka" target="_blank"><i class="bi bi-chat-dots me-3"></i>{{ t('feedback') }}</a></li>
+                    <li><a class="dropdown-item" href="https://yoomoney.ru/to/4100118029094054" target="_blank"><i class="bi bi-heart-fill text-danger me-3"></i>{{ t('support') }}</a></li>
+                </ul>
+            </div>
         </div>
     </div>
 
@@ -48,7 +57,7 @@
 
 {% block content %}
 <div class="content-spacer"></div>
-<div id="schedule-content" data-refresh-url="/group/refresh?group_name={{ group_info.SearchString|urlencode }}{% if week_id is not none %}&week_id={{ week_id }}{% endif %}{% if active_day %}&day={{ active_day.split(' ')[0] }}{% endif %}&lang={{ lang }}">
+<div id="schedule-content" data-refresh-url="/group/refresh?group_name={{ group_info.SearchString|urlencode }}{% if week_id is not none %}&week_id={{ week_id }}{% endif %}{% if active_day %}&day={{ active_day.split(' ')[0] }}{% endif %}{% if test_time %}&test_time={{ test_time|urlencode }}{% endif %}&lang={{ lang }}">
 	{% include "partials/schedule_content.html" %}
 </div>
 {% endblock %}

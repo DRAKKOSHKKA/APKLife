@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone, timedelta
 from flask import Flask, render_template, request
 from werkzeug.exceptions import HTTPException
 
@@ -12,6 +13,7 @@ from services.i18n import current_lang, resolve_lang, tr
 from services.logger import setup_logger
 from services.metrics import snapshot
 from services.version import get_version_status
+from services.calls import get_calls_context
 
 logger = setup_logger(__name__)
 
@@ -35,8 +37,13 @@ def create_app() -> Flask:
         return response
 
     @app.context_processor
-    def inject_version_status():
+    def inject_global_data():
         """Inject global status into all templates."""
+        test_time = request.args.get("test_time")
+        now_msk = datetime.now(timezone(timedelta(hours=3)))
+        ru_days = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
+        today_short = ru_days[now_msk.weekday()]
+
         return {
             "version_status": get_version_status(),
             "offline": False,
@@ -44,7 +51,11 @@ def create_app() -> Flask:
             "metrics": snapshot(),
             "t": tr,
             "lang": current_lang(),
-            "supported_langs": ("ru", "en"),
+            "supported_langs": ("ru",),
+            "call_schedule": get_calls_context(test_time),
+            "test_time": test_time,
+            "today_short": today_short,
+            "now_msk": now_msk
         }
 
     @app.errorhandler(Exception)

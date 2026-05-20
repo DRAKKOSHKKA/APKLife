@@ -5,7 +5,7 @@ from __future__ import annotations
 from flask import g, has_request_context, request
 
 DEFAULT_LANG = "ru"
-SUPPORTED_LANGS = ("ru", "en")
+SUPPORTED_LANGS = ("ru",)
 
 TRANSLATIONS: dict[str, dict[str, str]] = {
     "ru": {
@@ -45,42 +45,11 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "lang_en": "English",
         "week": "Неделя",
         "change_week": "Выбрать неделю",
-    },
-    "en": {
-        "app_title": "APKLife Schedule",
-        "offline_indicator": "No network. Showing local cached data.",
-        "about_project": "About",
-        "about_text": "APKLife is a local web app with offline cache for students.",
-        "technologies": "Technologies",
-        "settings": "Settings",
-        "dark_theme": "Dark theme",
-        "dev_mode": "DEV mode",
-        "refresh_schedule": "Refresh schedule",
-        "reset_group": "Reset selected group",
-        "close": "Close",
-        "info": "Info",
-        "search_hint": "Enter group, teacher, or classroom",
-        "search_placeholder": "11 nmo, Klimova T.S., assembly hall",
-        "find_schedule": "Find schedule",
-        "schedule": "Schedule",
-        "last_update": "Last update",
-        "no_lesson": "No lesson",
-        "rest_time": "Take a rest",
-        "back": "Back",
-        "group_required": "Group name is required",
-        "group_not_found": "'{name}' not found",
-        "invalid_group_params": "Invalid group parameters.",
-        "shown_cached": "Showing saved local version.",
-        "loaded_network": "Latest data loaded from the network.",
-        "no_data_no_cache": "Unable to load schedule and cache is missing.",
-        "warning_source_changed": "Source is unavailable or changed schema. Showing cached data.",
-        "data_missing": "Load parameters are missing.",
-        "unexpected_error": "An unexpected error occurred.",
-        "language": "Language",
-        "lang_ru": "Русский",
-        "lang_en": "English",
-        "week": "Week",
-        "change_week": "Select week",
+        "whats_new": "Что нового",
+        "attention": "Внимание",
+        "support": "Поддержка (донат)",
+        "feedback": "Обратная связь",
+        "testing_warning": "Приложение находится в тестировании. Возможны ошибки. Сообщайте о проблемах через раздел «Обратная связь».",
     },
 }
 

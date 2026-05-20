@@ -92,6 +92,8 @@ header {
 	padding: 16px 20px;
 	background-color: var(--md3-surface-container);
 	border-bottom: 1px solid var(--md3-outline-variant);
+    position: relative;
+    z-index: 1010;
 }
 
 .schedule-header {
@@ -322,10 +324,109 @@ header {
 	background-color: var(--md3-surface-container-lowest);
 }
 
+/* ACTIVE BREAK STYLE */
+.active-break {
+    border: 2px solid var(--md3-tertiary) !important;
+    background-color: var(--md3-tertiary-container) !important;
+    color: var(--md3-on-tertiary-container) !important;
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin: 4px 16px;
+    animation: pulse-break 2s infinite ease-in-out;
+}
+
+.active-break i {
+    color: var(--md3-tertiary) !important;
+}
+
+@keyframes pulse-break {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.01); }
+    100% { transform: scale(1); }
+}
+/* END ACTIVE BREAK */
+
 .lesson-content {
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
+}
+
+.time-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.period-badge {
+    width: 24px;
+    height: 24px;
+    background-color: var(--md3-secondary-container);
+    color: var(--md3-on-secondary-container);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    border: 1px solid var(--md3-outline-variant);
+    flex-shrink: 0;
+}
+
+.current-lesson .period-badge {
+    background-color: var(--md3-primary);
+    color: var(--md3-on-primary);
+    border-color: var(--md3-primary);
+}
+
+.lesson-countdown {
+    margin-left: auto;
+    background-color: var(--md3-primary);
+    color: var(--md3-on-primary);
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    animation: pulse-countdown 2s infinite;
+}
+
+.md3-timer-badge {
+    background-color: var(--md3-primary-container);
+    color: var(--md3-on-primary-container);
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--md3-primary);
+    box-shadow: 0 2px 8px rgba(103, 80, 164, 0.2);
+    animation: fadeIn 0.5s var(--md3-motion-expressive);
+}
+
+.md3-timer-badge i {
+    font-size: 16px;
+    color: var(--md3-primary);
+}
+
+body.dark-mode .md3-timer-badge {
+    background-color: var(--md3-primary);
+    color: var(--md3-on-primary);
+}
+
+body.dark-mode .md3-timer-badge i {
+    color: var(--md3-on-primary);
+}
+
+@keyframes pulse-countdown {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
 }
 
 .time,
@@ -503,6 +604,26 @@ header {
 	font-size: 0.9rem;
 }
 
+.offline-indicator {
+    position: fixed;
+    top: 64px;
+    left: 0;
+    right: 0;
+    z-index: 1090;
+    border-radius: 0 !important;
+    text-align: center;
+    margin: 0;
+    padding: 8px;
+    font-weight: 600;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    animation: slideDown 0.3s var(--md3-motion-expressive);
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-100%); }
+    to { transform: translateY(0); }
+}
+
 .alert-success {
 	background-color: var(--md3-success-container);
 	color: var(--md3-success);
@@ -511,6 +632,23 @@ header {
 .alert-warning {
 	background-color: var(--md3-warning-container);
 	color: var(--md3-warning);
+}
+
+.break-alert {
+    background-color: var(--md3-tertiary-container);
+    color: var(--md3-on-tertiary-container);
+    border: 1px dashed var(--md3-tertiary);
+    border-radius: 16px;
+    padding: 12px 20px;
+    font-size: 1rem;
+}
+
+.break-countdown {
+    background-color: var(--md3-tertiary);
+    color: var(--md3-on-tertiary);
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-size: 0.85rem;
 }
 
 /* Dialogs (Modals) */
@@ -664,6 +802,83 @@ header {
     justify-content: center;
 }
 
+/* Call Schedule Styles */
+.calls-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.call-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    background-color: var(--md3-surface-container-low);
+    border: 1px solid var(--md3-outline-variant);
+    border-radius: 12px;
+    gap: 12px;
+    transition: all 0.2s ease;
+}
+
+.break-row {
+    background-color: var(--md3-surface-container-lowest);
+    border-style: dashed;
+    opacity: 0.8;
+}
+
+.break-row .call-number {
+    background-color: var(--md3-tertiary-container);
+    color: var(--md3-on-tertiary-container);
+}
+
+.active-call {
+    background-color: var(--md3-primary-container);
+    border-color: var(--md3-primary);
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(103, 80, 164, 0.15);
+}
+
+.call-number {
+    width: 28px;
+    height: 28px;
+    background-color: var(--md3-secondary-container);
+    color: var(--md3-on-secondary-container);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.active-call .call-number {
+    background-color: var(--md3-primary);
+    color: var(--md3-on-primary);
+}
+
+.call-time {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.call-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--md3-on-surface-variant);
+    font-weight: 700;
+}
+
+.call-hours {
+    font-weight: 500;
+    color: var(--md3-on-surface);
+}
+
+.call-status {
+    font-size: 12px;
+}
+
 .cn-modal-content {
 	width: min(92%, 560px);
 	margin: 8% auto;
@@ -689,6 +904,34 @@ header {
 }
 
 /* Dropdown styling */
+.md3-dropdown-menu {
+    z-index: 3000 !important;
+    border: none;
+    border-radius: 16px;
+    padding: 8px;
+    background-color: var(--md3-surface-container-highest);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    animation: modal-emphasized-in 0.2s var(--md3-motion-expressive) both;
+}
+
+.md3-dropdown-menu .dropdown-item {
+    border-radius: 12px;
+    padding: 10px 16px;
+    color: var(--md3-on-surface);
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+}
+
+.md3-dropdown-menu .dropdown-item:hover {
+    background-color: color-mix(in srgb, var(--md3-primary) 12%, transparent);
+    color: var(--md3-primary);
+}
+
+.md3-dropdown-menu .dropdown-item i {
+    font-size: 18px;
+}
+
 .form-select {
 	background-color: var(--md3-surface);
 	color: var(--md3-on-surface);
@@ -759,7 +1002,57 @@ header {
 	user-select: none;
 }
 
-/* Responsive & Universal layout updates (Phone & PC) */
+/* MD3 Warning Banner (Beautiful Alert) */
+.md3-warning-banner {
+    background-color: var(--md3-warning-container);
+    color: var(--md3-on-warning-container);
+    border-radius: 20px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border: 1px solid var(--md3-warning);
+    box-shadow: 0 4px 12px rgba(178, 106, 0, 0.1);
+}
+
+.md3-warning-icon {
+    width: 44px;
+    height: 44px;
+    background-color: var(--md3-warning);
+    color: var(--md3-on-warning);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+}
+
+.md3-warning-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.md3-warning-title {
+    font-weight: 800;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 2px;
+    opacity: 0.9;
+}
+
+.md3-warning-text {
+    font-size: 13.5px;
+    line-height: 1.45;
+    font-weight: 500;
+}
+
+body.dark-mode .md3-warning-banner {
+    background-color: color-mix(in srgb, var(--md3-warning) 15%, var(--md3-surface-container-low));
+    border-color: color-mix(in srgb, var(--md3-warning) 30%, transparent);
+}
+
 @media (min-width: 768px) {
 	.main-content-wrapper {
 		max-width: 1000px;
@@ -872,6 +1165,105 @@ header {
     0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(103, 80, 164, 0.4); }
     70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(103, 80, 164, 0); }
     100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(103, 80, 164, 0); }
+}
+
+/* Modern MD3 Search Interface */
+.search-container {
+    max-width: 600px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1001;
+}
+
+.search-bar-wrapper {
+    display: flex;
+    align-items: center;
+    background-color: var(--md3-surface-container-high);
+    border-radius: 28px;
+    padding: 0 16px;
+    height: 56px;
+    transition: all 0.2s var(--md3-motion-standard);
+    border: 1px solid transparent;
+}
+
+.search-bar-wrapper:focus-within {
+    background-color: var(--md3-surface-container-highest);
+    border-color: var(--md3-primary);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.search-bar-icon {
+    color: var(--md3-on-surface-variant);
+    font-size: 20px;
+    margin-right: 12px;
+}
+
+.search-bar-input {
+    background: transparent;
+    border: none;
+    color: var(--md3-on-surface);
+    font-size: 16px;
+    width: 100%;
+    outline: none;
+    padding: 8px 0;
+}
+
+.search-bar-input::placeholder {
+    color: var(--md3-on-surface-variant);
+    opacity: 0.7;
+}
+
+/* Suggestion List MD3 */
+.suggestions-list {
+    position: absolute;
+    width: min(92%, 568px);
+    background-color: var(--md3-surface-container-highest);
+    border-radius: 16px;
+    margin-top: 4px;
+    overflow: hidden;
+    z-index: 1000;
+    display: none;
+}
+
+.suggestion-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    text-decoration: none !important;
+    color: var(--md3-on-surface);
+    transition: background-color 0.2s;
+}
+
+.suggestion-item:hover {
+    background-color: color-mix(in srgb, var(--md3-on-surface) 8%, transparent);
+}
+
+.suggestion-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--md3-surface-container-low);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px;
+    font-size: 18px;
+    color: var(--md3-primary);
+}
+
+.suggestion-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.suggestion-name {
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.suggestion-type {
+    font-size: 12px;
+    color: var(--md3-on-surface-variant);
 }
 
 /* Page transitions */
@@ -1082,6 +1474,7 @@ body.dark-mode .modal-footer {
     height: 140px; /* Adjusted for unified nav */
 }
 
+
 @media (min-width: 768px) {
     .md3-top-app-bar {
         left: 96px; /* Space for Nav Rail */
@@ -1125,6 +1518,3 @@ body.dark-mode .dev-panel {
 	font-weight: 700;
 	letter-spacing: 0.5px;
 }
-
-
-

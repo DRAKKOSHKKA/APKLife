@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from flask import Blueprint, jsonify, render_template, request
+from flask import Blueprint, jsonify, render_template, request, make_response
 
 from services.metrics import snapshot
 from services.schedule import force_refresh_context, load_schedule_context
@@ -15,7 +15,15 @@ LOG_PATH = Path("logs/app.log")
 def group_page():
     """Render group schedule page."""
     context = load_schedule_context(request.args)
-    return render_template("group.html", **context)
+    response = make_response(render_template("group.html", **context))
+
+    # Сохраняем последнюю выбранную группу в куки на год
+    if context.get("group_info"):
+        group_name = context["group_info"].get("SearchString")
+        if group_name:
+            response.set_cookie("last_group", group_name, max_age=60 * 60 * 24 * 365)
+
+    return response
 
 
 @bp_group.route("/refresh", methods=["GET"])
